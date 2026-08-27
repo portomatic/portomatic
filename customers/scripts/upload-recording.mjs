@@ -57,7 +57,9 @@ const objectDescription = JSON.parse(run("gcloud", [
   `--impersonate-service-account=${config.uploaderServiceAccount}`,
   "--format=json",
 ], { capture: true }));
-const remoteSha256 = objectDescription.metadata?.["portomatic-sha256"] || objectDescription.custom_metadata?.["portomatic-sha256"];
+const remoteSha256 = objectDescription.metadata?.["portomatic-sha256"]
+  || objectDescription.custom_metadata?.["portomatic-sha256"]
+  || objectDescription.custom_fields?.["portomatic-sha256"];
 if (remoteSha256 !== sha256 || Number(objectDescription.size) !== sourceStat.size) {
   throw new Error(`Remote object verification failed for ${storageUri}; refusing to update the call log`);
 }

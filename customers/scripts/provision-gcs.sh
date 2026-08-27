@@ -75,6 +75,8 @@ ensure_service_account "${signer}" "Portomatic customer recording URL signer"
 gcloud storage buckets add-iam-policy-binding "gs://${bucket}" \
   --member="serviceAccount:${uploader}" --role="roles/storage.objectUser" --project="${project_id}" >/dev/null
 gcloud storage buckets add-iam-policy-binding "gs://${bucket}" \
+  --member="serviceAccount:${uploader}" --role="roles/storage.legacyBucketReader" --project="${project_id}" >/dev/null
+gcloud storage buckets add-iam-policy-binding "gs://${bucket}" \
   --member="serviceAccount:${signer}" --role="roles/storage.objectViewer" --project="${project_id}" >/dev/null
 
 IFS=',' read -r -a principals <<<"${PORTOMATIC_GCP_FOUNDER_PRINCIPALS}"
@@ -87,5 +89,5 @@ for raw_principal in "${principals[@]}"; do
     --project="${project_id}" --member="${principal}" --role="roles/iam.serviceAccountTokenCreator" >/dev/null
 done
 
-"${script_dir}/verify-private-gcs.sh"
+bash "${script_dir}/verify-private-gcs.sh"
 echo "Private customer-recording storage is ready at gs://${bucket}."

@@ -11,6 +11,7 @@ export function signUrl(storageUri, durationOverride) {
     "sign-url",
     storageUri,
     `--duration=${duration}`,
+    `--region=${config.location}`,
     `--impersonate-service-account=${config.signerServiceAccount}`,
     `--project=${config.projectId}`,
     "--format=json",
