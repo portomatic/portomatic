@@ -1,0 +1,1 @@
+call_id,customer_slug,customer_name,recorded_at,recording_uri,recording_sha256,recording_bytes,recording_duration_seconds,segment_start_seconds,segment_end_seconds,speaker,transcript,transcript_status,source

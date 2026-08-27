@@ -1,0 +1,9 @@
+.DS_Store
+.env
+customers/.env
+customers/generated/
+customers/**/*.mov
+customers/**/*.mp4
+customers/**/*.m4a
+customers/**/*.wav
+customers/**/*.mp3
