@@ -8,7 +8,8 @@ const args = parseArgs(process.argv.slice(2));
 requireArgs(args, ["call-id"]);
 let rows = await queryRows(`
   SELECT ro.storage_uri
-  FROM call_recordings cr JOIN recording_objects ro USING (recording_id)
+  FROM active_call_recordings cr
+  JOIN recording_objects ro USING (recording_id)
   WHERE cr.call_id = ${sqlLiteral(args["call-id"])}
   ORDER BY cr.sequence;
 `);

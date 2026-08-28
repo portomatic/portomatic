@@ -14,7 +14,7 @@ const calls = await queryRows(`SELECT title, customer_name FROM call_catalog WHE
 if (calls.length !== 1) throw new Error(`Unknown call_id: ${args["call-id"]}`);
 const recordings = await queryRows(`
   SELECT ro.storage_uri
-  FROM call_recordings cr JOIN recording_objects ro USING (recording_id)
+  FROM active_call_recordings cr JOIN recording_objects ro USING (recording_id)
   WHERE cr.call_id = ${callId} ORDER BY cr.sequence;
 `);
 const uniqueUris = recordings.map((row) => row.storage_uri);

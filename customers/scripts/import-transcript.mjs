@@ -21,7 +21,8 @@ const callId = sqlLiteral(args["call-id"]);
 const recordingFilter = args["recording-uri"] ? `AND ro.storage_uri = ${sqlLiteral(args["recording-uri"])}` : "";
 const recordings = await queryRows(`
   SELECT ro.recording_id, ro.storage_uri, ro.sha256, ro.duration_ms
-  FROM call_recordings cr JOIN recording_objects ro USING (recording_id)
+  FROM active_call_recordings cr
+  JOIN recording_objects ro USING (recording_id)
   WHERE cr.call_id = ${callId} ${recordingFilter}
   ORDER BY cr.sequence;
 `);

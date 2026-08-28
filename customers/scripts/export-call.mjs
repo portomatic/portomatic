@@ -9,7 +9,7 @@ const calls = await queryRows(`SELECT * FROM call_catalog WHERE call_id = ${call
 if (calls.length !== 1) throw new Error(`Unknown call_id: ${args["call-id"]}`);
 const recordings = await queryRows(`
   SELECT cr.sequence, ro.storage_uri, ro.object_generation, ro.sha256, ro.bytes, ro.duration_ms, ro.recorded_at, ro.source_filename
-  FROM call_recordings cr JOIN recording_objects ro USING (recording_id)
+  FROM active_call_recordings cr JOIN recording_objects ro USING (recording_id)
   WHERE cr.call_id = ${callId} ORDER BY cr.sequence;
 `);
 const segments = await queryRows(`

@@ -73,11 +73,29 @@ ensure_service_account "${uploader}" "Portomatic customer recording uploader"
 ensure_service_account "${signer}" "Portomatic customer recording URL signer"
 
 gcloud storage buckets add-iam-policy-binding "gs://${bucket}" \
-  --member="serviceAccount:${uploader}" --role="roles/storage.objectUser" --project="${project_id}" >/dev/null
+  --member="serviceAccount:${uploader}" --role="roles/storage.objectCreator" --project="${project_id}" >/dev/null
+gcloud storage buckets add-iam-policy-binding "gs://${bucket}" \
+  --member="serviceAccount:${uploader}" --role="roles/storage.objectViewer" --project="${project_id}" >/dev/null
 gcloud storage buckets add-iam-policy-binding "gs://${bucket}" \
   --member="serviceAccount:${uploader}" --role="roles/storage.legacyBucketReader" --project="${project_id}" >/dev/null
 gcloud storage buckets add-iam-policy-binding "gs://${bucket}" \
   --member="serviceAccount:${signer}" --role="roles/storage.objectViewer" --project="${project_id}" >/dev/null
+
+# The uploader can create and verify objects, but cannot overwrite or delete the raw source of truth.
+gcloud storage buckets remove-iam-policy-binding "gs://${bucket}" \
+  --member="serviceAccount:${uploader}" --role="roles/storage.objectUser" --project="${project_id}" >/dev/null 2>&1 || true
+for legacy_binding in \
+  "roles/storage.legacyBucketOwner projectEditor:${project_id}" \
+  "roles/storage.legacyBucketOwner projectOwner:${project_id}" \
+  "roles/storage.legacyBucketReader projectViewer:${project_id}" \
+  "roles/storage.legacyObjectOwner projectEditor:${project_id}" \
+  "roles/storage.legacyObjectOwner projectOwner:${project_id}" \
+  "roles/storage.legacyObjectReader projectViewer:${project_id}"
+do
+  read -r legacy_role legacy_member <<<"${legacy_binding}"
+  gcloud storage buckets remove-iam-policy-binding "gs://${bucket}" \
+    --member="${legacy_member}" --role="${legacy_role}" --project="${project_id}" >/dev/null 2>&1 || true
+done
 
 IFS=',' read -r -a principals <<<"${PORTOMATIC_GCP_FOUNDER_PRINCIPALS}"
 for raw_principal in "${principals[@]}"; do
