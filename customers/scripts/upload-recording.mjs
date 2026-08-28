@@ -1,18 +1,15 @@
 #!/usr/bin/env node
-import crypto from "node:crypto";
-import fs from "node:fs";
 import fsp from "node:fs/promises";
 import path from "node:path";
 import { parseArgs, requireArgs, run } from "./lib/cli.mjs";
 import { loadConfig, requireConfig, repositoryRoot } from "./lib/config.mjs";
-import { readCallLog, rowsForVtt, validateCallLog, writeCallLog } from "./lib/call-log.mjs";
-import { parseTimestamp } from "./lib/time.mjs";
-import { parseVtt } from "./lib/vtt.mjs";
+import { executeSql, sqlLiteral } from "./lib/db.mjs";
+import { contentType, describeObject, hashFile, mediaDuration, objectMetadata, uploadJsonObject } from "./lib/storage.mjs";
 
 const args = parseArgs(process.argv.slice(2));
 requireArgs(args, ["file", "call-id", "customer-name", "customer-slug", "recorded-at"]);
 const config = loadConfig();
-requireConfig(config, ["projectId", "bucket", "uploaderServiceAccount"]);
+requireConfig(config, ["projectId", "bucket", "uploaderServiceAccount", "cloudSqlInstance", "cloudSqlDatabase"]);
 
 const sourcePath = path.resolve(args.file);
 const sourceStat = await fsp.stat(sourcePath);
@@ -27,106 +24,103 @@ const sha256 = await hashFile(sourcePath);
 const duration = mediaDuration(sourcePath);
 const date = args["recorded-at"].slice(0, 10);
 const extension = path.extname(sourcePath).toLowerCase() || ".mov";
-const defaultKey = `customers/${args["customer-slug"]}/recordings/${date}/${args["call-id"]}${extension}`;
-const objectKey = args["object-key"] || defaultKey;
+const objectKey = args["object-key"] || `raw-recordings/${date.replaceAll("-", "/")}/${args["call-id"]}${extension}`;
 if (objectKey.startsWith("/") || objectKey.includes("..")) throw new Error("--object-key must be a safe bucket-relative key");
 const storageUri = `gs://${config.bucket}/${objectKey}`;
-const rows = await readCallLog();
-if (rows.some((row) => row.call_id === args["call-id"] && row.recording_uri === storageUri)) {
-  throw new Error(`call-log.csv already contains ${args["call-id"]} at ${storageUri}`);
-}
 
 run("gcloud", [
-  "storage",
-  "cp",
-  "--no-clobber",
+  "storage", "cp", "--no-clobber",
   `--project=${config.projectId}`,
   `--impersonate-service-account=${config.uploaderServiceAccount}`,
   `--content-type=${contentType(extension)}`,
-  `--custom-metadata=portomatic-call-id=${args["call-id"]},portomatic-sha256=${sha256}`,
-  sourcePath,
-  storageUri,
+  `--custom-metadata=portomatic-call-id=${args["call-id"]},portomatic-sha256=${sha256},portomatic-source=raw-recording`,
+  sourcePath, storageUri,
 ]);
 
-const objectDescription = JSON.parse(run("gcloud", [
-  "storage",
-  "objects",
-  "describe",
-  storageUri,
-  `--project=${config.projectId}`,
-  `--impersonate-service-account=${config.uploaderServiceAccount}`,
-  "--format=json",
-], { capture: true }));
-const remoteSha256 = objectDescription.metadata?.["portomatic-sha256"]
-  || objectDescription.custom_metadata?.["portomatic-sha256"]
-  || objectDescription.custom_fields?.["portomatic-sha256"];
-if (remoteSha256 !== sha256 || Number(objectDescription.size) !== sourceStat.size) {
-  throw new Error(`Remote object verification failed for ${storageUri}; refusing to update the call log`);
+const object = describeObject(storageUri);
+const remoteSha256 = objectMetadata(object)["portomatic-sha256"];
+if (remoteSha256 !== sha256 || Number(object.size) !== sourceStat.size) {
+  throw new Error(`Remote object verification failed for ${storageUri}; refusing to write metadata`);
 }
 
-const recordingStart = parseTimestamp(args["recording-start"] ?? "0");
-const recordingEnd = parseTimestamp(args["recording-end"] ?? String(duration));
-if (recordingEnd > duration + 0.01) throw new Error("--recording-end is after the media duration");
-const common = {
-  call_id: args["call-id"],
-  customer_slug: args["customer-slug"],
-  customer_name: args["customer-name"],
-  recorded_at: args["recorded-at"],
-  recording_uri: storageUri,
-  recording_sha256: sha256,
-  recording_bytes: String(sourceStat.size),
-  recording_duration_seconds: duration.toFixed(3),
-  source: path.basename(sourcePath),
+const manifest = {
+  manifest_version: 1,
+  call: {
+    call_id: args["call-id"],
+    customer_slug: args["customer-slug"],
+    customer_name: args["customer-name"],
+    title: args.title || args["customer-name"],
+    recorded_at: args["recorded-at"],
+  },
+  recording: {
+    storage_uri: storageUri,
+    object_generation: String(object.generation),
+    sha256,
+    bytes: String(sourceStat.size),
+    duration_ms: String(Math.round(duration * 1000)),
+    recorded_at: args["recorded-at"],
+    source_filename: path.basename(sourcePath),
+    content_type: contentType(extension),
+    gcs_crc32c: object.crc32c || object.crc32c_hash || null,
+  },
 };
+const manifestKey = `call-manifests/${args["call-id"]}/${sha256}.json`;
+const { storageUri: manifestUri } = await uploadJsonObject(manifestKey, manifest, {
+  "portomatic-call-id": args["call-id"],
+  "portomatic-recording-sha256": sha256,
+  "portomatic-source": "call-manifest",
+});
 
-let newRows;
-if (args["transcript-vtt"]) {
-  const cues = parseVtt(await fsp.readFile(path.resolve(args["transcript-vtt"]), "utf8"));
-  if (cues.length === 0) throw new Error("The WebVTT file contains no transcript cues");
-  const transcriptOffset = parseTimestamp(args["transcript-offset"] ?? "0");
-  newRows = rowsForVtt(common, cues, transcriptOffset);
-} else {
-  newRows = [{
-    ...common,
-    segment_start_seconds: String(recordingStart),
-    segment_end_seconds: String(recordingEnd),
-    speaker: "",
-    transcript: "",
-    transcript_status: "pending",
-  }];
-}
+const sql = `
+BEGIN;
+INSERT INTO customers(slug, name)
+VALUES (${sqlLiteral(args["customer-slug"])}, ${sqlLiteral(args["customer-name"])})
+ON CONFLICT (slug) DO NOTHING;
 
-const updatedRows = [...rows, ...newRows];
-const errors = validateCallLog(updatedRows, { allowPendingUri: false });
-if (errors.length > 0) throw new Error(`Call log validation failed:\n${errors.join("\n")}`);
-await writeCallLog(updatedRows);
-console.log(`Uploaded ${sourcePath} to ${storageUri}`);
-console.log(`Added ${newRows.length} row(s) to customers/call-log.csv`);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM customers
+    WHERE slug = ${sqlLiteral(args["customer-slug"])} AND name = ${sqlLiteral(args["customer-name"])}
+  ) THEN
+    RAISE EXCEPTION 'customer identity conflicts with existing slug';
+  END IF;
+END $$;
 
-function mediaDuration(filename) {
-  const output = run("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", filename], { capture: true });
-  const value = Number(output.trim());
-  if (!Number.isFinite(value) || value <= 0) throw new Error(`Could not determine media duration for ${filename}`);
-  return value;
-}
+INSERT INTO calls(call_id, primary_customer_id, title, recorded_at)
+SELECT ${sqlLiteral(args["call-id"])}, customer_id, ${sqlLiteral(args.title || args["customer-name"])}, ${sqlLiteral(args["recorded-at"])}::timestamptz
+FROM customers WHERE slug = ${sqlLiteral(args["customer-slug"])}
+ON CONFLICT (call_id) DO NOTHING;
 
-async function hashFile(filename) {
-  const hash = crypto.createHash("sha256");
-  await new Promise((resolve, reject) => {
-    const stream = fs.createReadStream(filename);
-    stream.on("data", (chunk) => hash.update(chunk));
-    stream.on("error", reject);
-    stream.on("end", resolve);
-  });
-  return hash.digest("hex");
-}
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM calls c JOIN customers cu ON cu.customer_id = c.primary_customer_id
+    WHERE c.call_id = ${sqlLiteral(args["call-id"])} AND cu.slug = ${sqlLiteral(args["customer-slug"])}
+  ) THEN
+    RAISE EXCEPTION 'call identity conflicts with existing customer';
+  END IF;
+END $$;
 
-function contentType(extension) {
-  return ({
-    ".mov": "video/quicktime",
-    ".mp4": "video/mp4",
-    ".m4a": "audio/mp4",
-    ".wav": "audio/wav",
-    ".mp3": "audio/mpeg",
-  })[extension] || "application/octet-stream";
-}
+INSERT INTO recording_objects(
+  storage_uri, object_generation, sha256, bytes, duration_ms, recorded_at,
+  source_filename, content_type, gcs_crc32c
+) VALUES (
+  ${sqlLiteral(storageUri)}, ${sqlLiteral(String(object.generation))}::bigint, ${sqlLiteral(sha256)},
+  ${sourceStat.size}, ${Math.round(duration * 1000)}, ${sqlLiteral(args["recorded-at"])}::timestamptz,
+  ${sqlLiteral(path.basename(sourcePath))}, ${sqlLiteral(contentType(extension))},
+  ${sqlLiteral(object.crc32c || object.crc32c_hash || null)}
+);
+
+INSERT INTO call_recordings(call_id, recording_id, sequence, manifest_uri)
+SELECT ${sqlLiteral(args["call-id"])}, recording_id,
+       COALESCE((SELECT max(sequence) + 1 FROM call_recordings WHERE call_id = ${sqlLiteral(args["call-id"])}), 1),
+       ${sqlLiteral(manifestUri)}
+FROM recording_objects WHERE storage_uri = ${sqlLiteral(storageUri)};
+COMMIT;
+`;
+await executeSql(sql, { application: "portomatic_upload" });
+
+console.log(`Uploaded and verified immutable recording: ${storageUri}`);
+console.log(`Stored reconstruction manifest: ${manifestUri}`);
+console.log(`Indexed call in Cloud SQL: ${args["call-id"]}`);

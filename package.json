@@ -4,12 +4,17 @@
   "type": "module",
   "scripts": {
     "customers:provision": "bash customers/scripts/provision-gcs.sh",
+    "customers:provision-db": "bash customers/scripts/provision-cloud-sql.sh",
+    "customers:migrate-db": "node customers/scripts/apply-migrations.mjs",
     "customers:verify-storage": "bash customers/scripts/verify-private-gcs.sh",
+    "customers:verify-db": "node customers/scripts/verify-database.mjs",
     "customers:upload": "node customers/scripts/upload-recording.mjs",
     "customers:import-transcript": "node customers/scripts/import-transcript.mjs",
+    "customers:list": "node customers/scripts/list-calls.mjs",
+    "customers:search": "node customers/scripts/search-transcripts.mjs",
+    "customers:export": "node customers/scripts/export-call.mjs",
     "customers:url": "node customers/scripts/generate-url.mjs",
     "customers:open": "node customers/scripts/open-call.mjs",
-    "customers:validate": "node customers/scripts/validate-call-log.mjs",
     "test": "node --test"
   }
 }
