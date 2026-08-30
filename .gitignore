@@ -1,6 +1,7 @@
 .DS_Store
 .env
 customers/.env
+media/.env
 customers/call-log.csv
 customers/generated/
 customers/**/*.mov
