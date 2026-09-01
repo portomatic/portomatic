@@ -21,11 +21,6 @@
 
 * { box-sizing: border-box; }
 
-::selection {
-  background: var(--accent);
-  color: #fff;
-}
-
 html { background: var(--background); }
 
 body {
@@ -83,12 +78,6 @@ h1 {
   font-weight: 400;
   letter-spacing: -0.055em;
   line-height: 0.9;
-}
-
-h1::selection,
-h1 *::selection {
-  background: transparent;
-  color: var(--accent);
 }
 
 .hero__iphone {
