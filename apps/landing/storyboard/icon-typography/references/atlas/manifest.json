@@ -1,0 +1,356 @@
+{
+  "source": "Simple Icons CDN plus current official site vectors for the custom entries",
+  "downloaded": "2026-08-28",
+  "groups": [
+    {
+      "id": "cloud-compute",
+      "title": "Cloud & compute",
+      "note": "Deployment surfaces, runtimes, containers, and elastic infrastructure",
+      "items": [
+        [
+          "Vercel",
+          "vercel"
+        ],
+        [
+          "Netlify",
+          "netlify"
+        ],
+        [
+          "Railway",
+          "railway"
+        ],
+        [
+          "Render",
+          "render"
+        ],
+        [
+          "Fly.io",
+          "flydotio"
+        ],
+        [
+          "DigitalOcean",
+          "digitalocean"
+        ],
+        [
+          "Cloudflare",
+          "cloudflare"
+        ],
+        [
+          "Deno",
+          "deno"
+        ],
+        [
+          "Bun",
+          "bun"
+        ],
+        [
+          "Kubernetes",
+          "kubernetes"
+        ],
+        [
+          "Docker",
+          "docker"
+        ],
+        [
+          "SpaceX",
+          "../marks/spacex-wordmark-black"
+        ]
+      ]
+    },
+    {
+      "id": "data-infrastructure",
+      "title": "Data infrastructure",
+      "note": "Databases, storage, query engines, and developer data platforms",
+      "items": [
+        [
+          "PlanetScale",
+          "planetscale"
+        ],
+        [
+          "Neon",
+          "neon"
+        ],
+        [
+          "Supabase",
+          "supabase"
+        ],
+        [
+          "Upstash",
+          "upstash"
+        ],
+        [
+          "MongoDB",
+          "mongodb"
+        ],
+        [
+          "Redis",
+          "redis"
+        ],
+        [
+          "CockroachDB",
+          "cockroachlabs"
+        ],
+        [
+          "Timescale",
+          "timescale"
+        ],
+        [
+          "ClickHouse",
+          "clickhouse"
+        ],
+        [
+          "ScyllaDB",
+          "scylladb"
+        ],
+        [
+          "Qdrant",
+          "qdrant"
+        ],
+        [
+          "Prisma",
+          "prisma"
+        ],
+        [
+          "Databricks",
+          "databricks"
+        ],
+        [
+          "Convex",
+          "convex"
+        ],
+        [
+          "Turso",
+          "turso"
+        ],
+        [
+          "Drizzle",
+          "drizzle"
+        ],
+        [
+          "SpacetimeDB",
+          "spacetimedb"
+        ]
+      ]
+    },
+    {
+      "id": "ai-infrastructure",
+      "title": "AI infrastructure",
+      "note": "Model serving, inference, training, orchestration, and agent infrastructure",
+      "items": [
+        [
+          "Replicate",
+          "replicate"
+        ],
+        [
+          "Hugging Face",
+          "huggingface"
+        ],
+        [
+          "Weights & Biases",
+          "weightsandbiases"
+        ],
+        [
+          "LangChain",
+          "langchain"
+        ],
+        [
+          "Perplexity",
+          "perplexity"
+        ],
+        [
+          "PyTorch",
+          "pytorch"
+        ],
+        [
+          "Ollama",
+          "ollama"
+        ],
+        [
+          "Anthropic",
+          "anthropic"
+        ],
+        [
+          "Mistral AI",
+          "mistralai"
+        ],
+        [
+          "Modal",
+          "modal"
+        ],
+        [
+          "Fireworks AI",
+          "fireworks-ai"
+        ],
+        [
+          "Black Forest Labs",
+          "black-forest-labs"
+        ],
+        [
+          "Etched",
+          "etched"
+        ],
+        [
+          "Groq",
+          "groq"
+        ]
+      ]
+    },
+    {
+      "id": "observability",
+      "title": "Observability & reliability",
+      "note": "Monitoring, tracing, errors, analytics, and operational feedback",
+      "items": [
+        [
+          "Sentry",
+          "sentry"
+        ],
+        [
+          "PostHog",
+          "posthog"
+        ],
+        [
+          "Grafana",
+          "grafana"
+        ],
+        [
+          "Prometheus",
+          "prometheus"
+        ],
+        [
+          "Datadog",
+          "datadog"
+        ],
+        [
+          "Honeybadger",
+          "honeybadger"
+        ],
+        [
+          "New Relic",
+          "newrelic"
+        ],
+        [
+          "OpenTelemetry",
+          "opentelemetry"
+        ],
+        [
+          "Elastic",
+          "elastic"
+        ],
+        [
+          "Better Stack",
+          "betterstack"
+        ]
+      ]
+    },
+    {
+      "id": "devtools-agents",
+      "title": "Devtools & agents",
+      "note": "Editors, coding environments, collaboration, and agent-facing tools",
+      "items": [
+        [
+          "Linear",
+          "linear"
+        ],
+        [
+          "Cursor",
+          "cursor"
+        ],
+        [
+          "Replit",
+          "replit"
+        ],
+        [
+          "StackBlitz",
+          "stackblitz"
+        ],
+        [
+          "Gitpod",
+          "gitpod"
+        ],
+        [
+          "CodeSandbox",
+          "codesandbox"
+        ],
+        [
+          "Coder",
+          "coder"
+        ],
+        [
+          "GitHub Copilot",
+          "githubcopilot"
+        ],
+        [
+          "Storybook",
+          "storybook"
+        ],
+        [
+          "Biome",
+          "biome"
+        ]
+      ]
+    },
+    {
+      "id": "api-workflow",
+      "title": "API, auth & workflow",
+      "note": "Identity, integrations, orchestration, messaging, and API systems",
+      "items": [
+        [
+          "Clerk",
+          "clerk"
+        ],
+        [
+          "Auth0",
+          "auth0"
+        ],
+        [
+          "Kong",
+          "kong"
+        ],
+        [
+          "Hasura",
+          "hasura"
+        ],
+        [
+          "Temporal",
+          "temporal"
+        ],
+        [
+          "Airbyte",
+          "airbyte"
+        ],
+        [
+          "Apache Kafka",
+          "apachekafka"
+        ],
+        [
+          "Apache Airflow",
+          "apacheairflow"
+        ],
+        [
+          "Zapier",
+          "zapier"
+        ],
+        [
+          "n8n",
+          "n8n"
+        ],
+        [
+          "GraphQL",
+          "graphql"
+        ],
+        [
+          "Insomnia",
+          "insomnia"
+        ],
+        [
+          "Postman",
+          "postman"
+        ],
+        [
+          "Inngest",
+          "inngest"
+        ]
+      ]
+    }
+  ]
+}

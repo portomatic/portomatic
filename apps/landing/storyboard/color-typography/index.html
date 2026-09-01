@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Portomatic website color and typography studies">
+    <title>Color &amp; typography — Portomatic</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body class="design-page-body">
+    <aside class="page-sidebar">
+      <p>Pages</p>
+      <nav aria-label="Pages">
+        <a href="../index.html"><span aria-hidden="true"></span>Prior art</a>
+        <a href="../icon-typography/index.html"><span aria-hidden="true"></span>Icon &amp; typography</a>
+        <a href="./index.html" aria-current="page"><span aria-hidden="true"></span>Color &amp; typography</a>
+        <a href="../landing-page/index.html"><span aria-hidden="true"></span>Landing page</a>
+      </nav>
+    </aside>
+
+    <main class="design-canvas system-board" aria-label="Color and typography canvas">
+      <header class="masthead">
+        <div class="masthead__title">
+          <p class="study__number">Website system</p>
+          <h1>Color &amp; typography</h1>
+        </div>
+      </header>
+
+      <section class="system-lockup" aria-label="Selected Portomatic identity">
+        <img src="../icon-typography/portomatic-hormuz-mark.svg" alt="">
+        <p>Portomatic</p>
+        <span>Selected</span>
+      </section>
+
+      <section class="system-section" aria-labelledby="palette-title">
+        <header class="system-section__header">
+          <h2 id="palette-title">Palette</h2>
+          <p>Selected · Cobalt / Mist</p>
+        </header>
+        <div class="color-directions color-directions--selected">
+          <article class="color-direction color-direction--cobalt">
+            <div class="color-direction__preview">
+              <div class="color-direction__brand">
+                <span class="color-direction__mark" aria-hidden="true"></span>
+                <b>Portomatic</b>
+              </div>
+              <div class="color-direction__copy">
+                <h4>Hero text</h4>
+                <p>Subhero text</p>
+              </div>
+              <div class="color-direction__actions">
+                <b>Primary action</b>
+                <b>Secondary action</b>
+              </div>
+              <div class="color-direction__proof" aria-hidden="true">
+                <span></span><span></span><span></span>
+                <div><i></i><i></i><i></i></div>
+              </div>
+            </div>
+            <dl class="color-direction__palette">
+              <div><dt>Background</dt><dd>#F5F8FA</dd></div>
+              <div><dt>Text</dt><dd>#111B24</dd></div>
+              <div><dt>Surface</dt><dd>#E7EEF3</dd></div>
+              <div><dt>Accent</dt><dd>#2457D6</dd></div>
+              <div><dt>Signal</dt><dd>#8CD3FF</dd></div>
+            </dl>
+          </article>
+        </div>
+      </section>
+
+      <section class="system-section" aria-labelledby="website-type-title">
+        <header class="system-section__header">
+          <h2 id="website-type-title">Website typography</h2>
+          <p>Baseline · Space Grotesk 400</p>
+        </header>
+        <div class="type-workspace">
+          <article class="type-sample type-sample--hero">
+            <span>H1</span>
+            <p>Hero text</p>
+          </article>
+          <article class="type-sample type-sample--subhero">
+            <span>Subhero</span>
+            <p>Subhero text</p>
+          </article>
+          <article class="type-sample type-sample--actions">
+            <span>Actions</span>
+            <div>
+              <b>Primary action</b>
+              <b>Secondary action</b>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

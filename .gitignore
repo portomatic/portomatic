@@ -1,5 +1,6 @@
 .DS_Store
 .env
+.wrangler/
 customers/.env
 media/.env
 customers/call-log.csv
@@ -9,3 +10,6 @@ customers/**/*.mp4
 customers/**/*.m4a
 customers/**/*.wav
 customers/**/*.mp3
+
+# Generated landing-page reference captures (HTML, scripts, fonts, and media).
+apps/landing/captures/

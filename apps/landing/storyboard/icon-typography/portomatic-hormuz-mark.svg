@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title">
+  <title id="title">Portomatic Hormuz mark</title>
+  <defs>
+    <clipPath id="portomatic-hormuz-circle">
+      <circle cx="128" cy="128" r="118"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#portomatic-hormuz-circle)" fill="currentColor">
+    <path d="M0 0h256v155l-106-18-20-58L9 98Z"/>
+    <path d="M0 256v-47l102-85 16-11-11 31 37 71 79 41Z"/>
+  </g>
+</svg>

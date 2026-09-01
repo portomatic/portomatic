@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "landing:capture": "node apps/landing/scripts/capture-references.mjs",
+    "landing:dev": "node apps/landing/dev-server.mjs",
     "customers:provision": "bash customers/scripts/provision-gcs.sh",
     "customers:provision-db": "bash customers/scripts/provision-cloud-sql.sh",
     "customers:migrate-db": "node customers/scripts/apply-migrations.mjs",

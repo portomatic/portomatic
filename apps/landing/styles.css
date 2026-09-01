@@ -1,0 +1,202 @@
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("./assets/space-grotesk-latin.woff2") format("woff2");
+}
+
+:root {
+  color-scheme: light;
+  --background: #f5f8fa;
+  --foreground: #111b24;
+  --muted: #60717d;
+  --border: rgba(17, 27, 36, 0.18);
+  --accent: #2457d6;
+  --page-width: 64rem;
+  font-family: "Space Grotesk", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+
+html { background: var(--background); }
+
+body {
+  min-width: 320px;
+  min-height: 100svh;
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.site-header {
+  display: flex;
+  width: min(100% - 2rem, var(--page-width));
+  min-height: 4.25rem;
+  align-items: center;
+  margin: 0 auto;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.brand img {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.brand span {
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: -0.06em;
+}
+
+.hero {
+  display: flex;
+  width: min(100% - 2rem, var(--page-width));
+  min-height: calc(100svh - 8.5rem);
+  align-items: flex-start;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0 auto;
+  padding: 3rem 0;
+  text-align: left;
+}
+
+h1 {
+  max-width: 13ch;
+  margin: 0;
+  font-size: clamp(3.5rem, 8vw, 7rem);
+  font-weight: 400;
+  letter-spacing: -0.055em;
+  line-height: 0.9;
+}
+
+.hero__iphone {
+  letter-spacing: 0;
+}
+
+.hero__subhero {
+  max-width: 34rem;
+  margin: 1.4rem 0 0;
+  color: var(--muted);
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  line-height: 1.45;
+}
+
+.button {
+  display: inline-flex;
+  min-height: 3.15rem;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2rem;
+  padding: 0.85rem 1.2rem;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 400;
+  line-height: 1;
+  text-decoration: none;
+  transition: background-color 140ms ease;
+}
+
+.button:hover { background: #1948bc; }
+
+.site-footer {
+  display: flex;
+  width: min(100% - 2rem, var(--page-width));
+  min-height: 4.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 auto;
+  border-top: 1px solid var(--border);
+}
+
+.support {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.site-footer p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.backers {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.backers a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--foreground);
+  font-size: 0.74rem;
+  text-decoration: none;
+}
+
+.backers img {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.socials {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.socials a {
+  display: inline-flex;
+  color: var(--muted);
+  opacity: 0.72;
+  transition: opacity 140ms ease;
+}
+
+.socials a:hover { opacity: 1; }
+
+.socials img {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.button:focus-visible,
+.brand:focus-visible,
+.backers a:focus-visible,
+.socials a:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 42%, transparent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 34rem) {
+  .hero { padding: 4rem 0 6rem; }
+  h1 { font-size: clamp(3.2rem, 18vw, 4.8rem); }
+  .button { width: 100%; }
+}
+
+@media (max-width: 22rem) {
+  .site-footer {
+    min-height: auto;
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 1rem 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .socials a { transition: none; }
+}

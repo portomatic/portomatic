@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Portomatic landing-page workspace">
+    <title>Landing page — Portomatic</title>
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body class="landing-workspace-body">
+    <aside class="page-sidebar">
+      <p>Pages</p>
+      <nav aria-label="Pages">
+        <a href="../index.html"><span aria-hidden="true"></span>Prior art</a>
+        <a href="../icon-typography/index.html"><span aria-hidden="true"></span>Icon &amp; typography</a>
+        <a href="../color-typography/index.html"><span aria-hidden="true"></span>Color &amp; typography</a>
+        <a href="./index.html" aria-current="page"><span aria-hidden="true"></span>Landing page</a>
+      </nav>
+    </aside>
+
+    <main class="landing-workspace" aria-label="Landing page workspace">
+      <section class="product-brief" aria-labelledby="product-brief-title">
+        <header class="product-brief__header">
+          <p class="product-brief__label">Working brief — not landing-page copy</p>
+          <h2 id="product-brief-title">Portomatic</h2>
+        </header>
+
+        <div class="product-brief__grid">
+          <section>
+            <h3>Users</h3>
+            <ul>
+              <li>Coding agents</li>
+              <li>iOS developers using coding agents</li>
+              <li>Vibe-coding platforms building mobile apps</li>
+            </ul>
+          </section>
+
+          <section>
+            <h3>Product</h3>
+            <ul>
+              <li>A remotely hosted iOS simulator</li>
+              <li>Runs an iOS app without renting a Mac mini</li>
+              <li>Embeds in any webpage or webview through an iframe</li>
+              <li>Built to be ergonomic for a coding agent</li>
+            </ul>
+          </section>
+
+          <section>
+            <h3>How it solves the problem</h3>
+            <ul>
+              <li>Give each coding agent an isolated simulator to iterate against and test its implementation</li>
+              <li>Scale simulator sessions quickly instead of managing a fleet of Mac minis</li>
+              <li>Treat simulator infrastructure more like cattle</li>
+              <li><strong>Primary action:</strong> remote host a real app</li>
+              <li><strong>Secondary action:</strong> ask ChatGPT about Portomatic</li>
+            </ul>
+          </section>
+
+          <section class="product-brief__concerns">
+            <h3>Questions potential users may have</h3>
+            <div class="product-brief__qa-head" aria-hidden="true"><span>Question</span><span>AI suggested answer</span><span>Human answer</span></div>
+            <dl class="product-brief__qa">
+              <div><dt>What do I provide: a zipped Simulator <code>.app</code>, an <code>.ipa</code>, or source code?</dt><dd>Upload a zipped iOS Simulator <code>.app</code> bundle. Portomatic does not need your source code, and an App Store <code>.ipa</code> is built for a physical device rather than the Simulator.</dd><dd class="product-brief__human-answer"></dd></div>
+              <div><dt>Who builds the app if compiling it still requires a Mac?</dt><dd>You or your existing CI system build the Simulator app. Portomatic starts and hosts the resulting build; it does not compile the source code. <strong>[Confirm whether a hosted build step is planned.]</strong></dd><dd class="product-brief__human-answer"></dd></div>
+              <div><dt>Is this Apple Simulator or an emulator? What is not compatible?</dt><dd>Portomatic runs apps built for the iOS Simulator in a lightweight remote runtime. It is not a physical iPhone, so hardware-only behavior and device-only binaries may not work. <strong>[Define the exact compatibility boundary.]</strong></dd><dd class="product-brief__human-answer"></dd></div>
+              <div><dt>Do camera, Bluetooth, notifications, location, and other device features work?</dt><dd>The core app UI, touch input, networking, and location testing should work. Camera, Bluetooth, push notifications, and other hardware-dependent features need an explicit support list. <strong>[Confirm supported device features.]</strong></dd><dd class="product-brief__human-answer"></dd></div>
+              <div><dt>Can multiple agents run isolated simulators without stepping on each other?</dt><dd>Yes. Each agent gets an isolated simulator session that can be started, reset, and destroyed independently, so concurrent agents do not share app state.</dd><dd class="product-brief__human-answer"></dd></div>
+              <div><dt>Can an agent see, control, inspect, and reset the app through the API or iframe?</dt><dd>Yes. An agent can view and control the app through the embedded session and use the API to interact with and reset it. <strong>[Confirm available inspection data, such as logs, screenshots, and accessibility state.]</strong></dd><dd class="product-brief__human-answer"></dd></div>
+              <div><dt>What are the startup time, latency, concurrency limits, and price?</dt><dd>Sessions start in <strong>[measured startup time]</strong>, add <strong>[measured interaction latency]</strong>, support <strong>[concurrency limit]</strong>, and cost <strong>[price and billing unit]</strong>. The goal is to cost substantially less than renting a Mac by the hour.</dd><dd class="product-brief__human-answer"></dd></div>
+              <div><dt>How are app binaries, credentials, screenshots, and session data protected?</dt><dd>Each session is isolated and ephemeral. Data is encrypted in transit, retained only for <strong>[retention period]</strong>, and deleted when the session ends. <strong>[Confirm storage, credential handling, and deletion guarantees.]</strong></dd><dd class="product-brief__human-answer"></dd></div>
+            </dl>
+          </section>
+        </div>
+      </section>
+
+      <section class="landing-workspace__preview" aria-label="Current landing page">
+        <iframe src="../../index.html" title="Portomatic landing page"></iframe>
+      </section>
+    </main>
+  </body>
+</html>
