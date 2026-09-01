@@ -92,19 +92,12 @@ h1 {
   line-height: 1.45;
 }
 
-.hero__access {
-  margin: 0.85rem 0 0;
-  color: var(--muted);
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-}
-
 .button {
   display: inline-flex;
   min-height: 3.15rem;
   align-items: center;
   justify-content: center;
-  margin-top: 1.6rem;
+  margin-top: 2rem;
   padding: 0.85rem 1.2rem;
   background: var(--accent);
   color: #fff;
