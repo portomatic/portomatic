@@ -21,6 +21,11 @@
 
 * { box-sizing: border-box; }
 
+::selection {
+  background: var(--foreground);
+  color: var(--background);
+}
+
 html { background: var(--background); }
 
 body {
@@ -77,7 +82,7 @@ h1 {
   font-size: clamp(3.5rem, 8vw, 7rem);
   font-weight: 400;
   letter-spacing: -0.055em;
-  line-height: 0.9;
+  line-height: 1.03;
 }
 
 .hero__iphone {
