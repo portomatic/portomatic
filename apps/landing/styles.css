@@ -6,6 +6,17 @@
   src: url("./assets/space-grotesk-latin.woff2") format("woff2");
 }
 
+@font-face {
+  font-family: "Space Grotesk Hero";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  ascent-override: 75%;
+  descent-override: 15%;
+  line-gap-override: 0%;
+  src: url("./assets/space-grotesk-latin.woff2") format("woff2");
+}
+
 :root {
   color-scheme: light;
   --background: #f5f8fa;
@@ -74,6 +85,7 @@ body {
 h1 {
   max-width: 13ch;
   margin: 0;
+  font-family: "Space Grotesk Hero", "Space Grotesk", ui-sans-serif, sans-serif;
   font-size: clamp(3.5rem, 8vw, 7rem);
   font-weight: 400;
   letter-spacing: -0.055em;
