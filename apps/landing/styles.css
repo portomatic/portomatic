@@ -21,11 +21,6 @@
 
 * { box-sizing: border-box; }
 
-::selection {
-  background: var(--accent);
-  color: #fff;
-}
-
 html { background: var(--background); }
 
 body {
