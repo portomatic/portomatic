@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>iOS on Linux MVP — Evidence</title>
+  <link rel="stylesheet" href="/textbook.css">
+</head>
+<body>
+  <header id="top">
+    <h1>iOS on Linux MVP — Evidence</h1>
+    <p>Offline excerpts supporting the architectural premises. Estimates are not source claims.</p>
+    <p><a href="/ios-on-linux-mvp.html">Return to the estimates</a></p>
+  </header>
+
+  <article class="source-record" id="s1">
+    <h2>[1] Pinned target inventory</h2>
+    <p><strong>Local source:</strong> <code>ios-simulator/plan_to_make_port.md</code>, lines 37–41 · captured in the local project</p>
+    <blockquote>
+      <p>“The real <code>Simulator</code> executable is ARM64. CoreSimulator and SimulatorKit include ARM64e images. Matching the host ISA avoids general CPU emulation but does not remove Mach-O, dyld, PAC, TLS, VM, Darwin syscall, Mach IPC, service, or graphics translation.”</p>
+      <p>“Kakehashi demonstrates native Darwin ARM64 execution on Linux AArch64 across a carefully managed syscall/TLS boundary but does not implement Mach or GUI application behavior. Darling demonstrates a Mach-O loader, userspace kernel server, Mach IPC, syscall translation, and partial framework/service replacements. … None runs this target.”</p>
+    </blockquote>
+  </article>
+
+  <article class="source-record" id="s2">
+    <h2>[2] Direct pixel boundary</h2>
+    <p><strong>Local source:</strong> <code>ios-simulator/CAPTURE_PLAN.md</code>, line 40 · captured from the pinned Xcode 26.6 oracle</p>
+    <blockquote><p>“A disposable copied <code>simctl io enumerate</code> client copied the 1206×2622 BGRA pixel plane (<code>bytesPerRow × height</code>) under a read-only IOSurface lock with 4,864-byte stride. Removing 40 zero padding bytes per row produced 12,648,528 active bytes exactly equal to four temporally separate stable unmasked BMP captures…”</p></blockquote>
+  </article>
+
+  <article class="source-record" id="s3">
+    <h2>[3] Direct input boundary</h2>
+    <p><strong>Local source:</strong> <code>ios-simulator/CAPTURE_PLAN.md</code>, line 42 · captured from the pinned Xcode 26.6 oracle</p>
+    <blockquote><p>“A direct SimulatorKit client sent a 352-byte touch-down/up pair with digitizer target <code>0x32</code>; the fixture's external beacon advanced from <code>ready/count=0</code> to <code>incremented/count=1</code>, and the next stable pixel plane changed. No XCUITest process or API participated.”</p></blockquote>
+  </article>
+
+  <article class="source-record" id="s4">
+    <h2>[4] Kakehashi</h2>
+    <p><strong>Snapshot:</strong> <code>wie-project/kakehashi</code> at <code>59c0a463f36ae4f32ca2b89475a8c4c8ae458815</code></p>
+    <p><strong>Local source:</strong> <code>compatibility-lab/implementations/kakehashi/README.md</code></p>
+    <blockquote>
+      <p>“Userspace <strong>macOS ARM64 → Linux aarch64</strong> translation layer. CLI-first, no JIT, no instruction emulator.”</p>
+      <p>“Guest code runs as native ARM64; the runtime only intervenes at syscalls, threads, and faults.”</p>
+      <p>Under “Not Claimed Yet”: “GUI … full macOS app stack.”</p>
+    </blockquote>
+  </article>
+
+  <article class="source-record" id="s5">
+    <h2>[5] Darling</h2>
+    <p><strong>Snapshot:</strong> <code>darlinghq/darling</code> at <code>282c7309168cc98683a8e6facda291bbf853342c</code></p>
+    <p><strong>Local source:</strong> <code>compatibility-lab/implementations/darling/README.md</code></p>
+    <blockquote><p>“It consists of a Mach-O binary loader and a userspace kernel server (darlingserver) that implements macOS's Mach IPC, POSIX, and Darwin syscall interfaces on top of Linux — along with reimplementations of Apple's frameworks…”</p></blockquote>
+  </article>
+
+  <article class="source-record" id="s6">
+    <h2>[6] touchHLE</h2>
+    <p><strong>Snapshot:</strong> <code>touchHLE/touchHLE</code> at <code>331903de883405a8597036e4ed5ce8333f1604c9</code></p>
+    <p><strong>Local source:</strong> <code>compatibility-lab/implementations/touchhle/README.md</code></p>
+    <blockquote>
+      <p>“Instead of running iPhone OS inside emulation, touchHLE <em>itself</em> takes the place of iPhone OS and provides its own implementations of the system frameworks (Foundation, UIKit, OpenGL ES, OpenAL, etc).”</p>
+      <p>Its stated targets are iPhone OS 2.x and 3.0; its roadmap says “Never: 64-bit iOS.” It also says “UIKit is easily the most hacky and incomplete of the large frameworks that have been implemented.”</p>
+    </blockquote>
+  </article>
+
+  <article class="source-record" id="s7">
+    <h2>[7] xnu-qemu-arm64</h2>
+    <p><strong>Snapshot:</strong> <code>alephsecurity/xnu-qemu-arm64</code> at <code>2694993f9281a8678d519704c3cd29d4c9d39415</code></p>
+    <p><strong>Local source:</strong> <code>compatibility-lab/implementations/xnu-qemu-arm64/README.md</code></p>
+    <blockquote><p>“Current project's functionality: <code>launchd</code> services; Interactive bash; R/W secondary disk device; Execution of binaries; SSH through TCP tunneling; Textual FrameBuffer …” The documented target is iOS 12.1.</p></blockquote>
+  </article>
+
+  <article class="source-record" id="s8">
+    <h2>[8] xtool</h2>
+    <p><strong>Snapshot:</strong> <code>xtool-org/xtool</code> at <code>2d58d987edff728fccebc6df643b1672e3583f00</code></p>
+    <p><strong>Local source:</strong> <code>compatibility-lab/implementations/xtool/README.md</code></p>
+    <blockquote>
+      <p>“Cross-platform Xcode replacement. Build and deploy iOS apps with SwiftPM on Linux, Windows, and macOS.”</p>
+      <p>Its overview claims: “Build a SwiftPM package into an iOS app,” “Sign and install iOS apps,” and interaction with Apple developer services.</p>
+    </blockquote>
+    <p>This demonstrates a Linux iOS build path for SwiftPM-shaped projects. It does not establish arbitrary <code>.xcodeproj</code>/<code>.xcworkspace</code>, every Xcode build phase, or Simulator runtime execution.</p>
+  </article>
+
+  <footer><a href="#top">Top</a> · <a href="/ios-on-linux-mvp.html">Return to estimates</a></footer>
+</body>
+</html>

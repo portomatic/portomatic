@@ -5,6 +5,9 @@
   "scripts": {
     "landing:capture": "node apps/landing/scripts/capture-references.mjs",
     "landing:dev": "node apps/landing/dev-server.mjs",
+    "docs:dev": "python3 tools/dashboard/serve.py",
+    "docs:refresh": "python3 tools/dashboard/dashboard.py --once",
+    "docs:test": "python3 -m unittest discover -s tools/dashboard -p 'test_*.py'",
     "customers:provision": "bash customers/scripts/provision-gcs.sh",
     "customers:provision-db": "bash customers/scripts/provision-cloud-sql.sh",
     "customers:migrate-db": "node customers/scripts/apply-migrations.mjs",

@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Corellium — cited excerpts</title>
+  <link rel="stylesheet" href="/textbook.css">
+</head>
+<body>
+  <nav class="page-list" aria-label="Pages">
+    <ul>
+      <li><a href="/">Apple Process Architecture</a></li>
+      <li><a href="/running-apple-on-linux.html">Running Apple on Linux</a></li>
+    </ul>
+  </nav>
+
+  <header id="top">
+    <h1>Corellium: cited excerpts</h1>
+    <p>Exact excerpts used by the chapter. Every full source is stored locally.</p>
+  </header>
+
+  <article class="source-record" id="s1">
+    <h2>[1] Native Arm virtualization</h2>
+    <blockquote>
+      <p>“We use cutting-edge Arm hardware that enables us to virtualize Arm devices on their native architecture, combining high fidelity with on-demand availability.”</p>
+      <p>“The Corellium Hypervisor for Arm (CHARM) is our proprietary type-1 hypervisor designed to run multiple complex devices, peripherals and chipsets on bare metal hardware.”</p>
+    </blockquote>
+    <p><cite>Corellium Virtual Hardware</cite> — <a href="/evidence/corellium/mirror/current/www.corellium.com/index.html">offline original</a> · <a href="/evidence/corellium/raw/current/www.corellium.com/index.html">raw capture</a></p>
+    <p class="provenance">Captured 2026-08-31 · SHA-256 c5da7b0e6bb127fe6586e2ffc5e6a90123ae76fb8bd39444c30ad9f290880dbf</p>
+  </article>
+
+  <article class="source-record" id="s2">
+    <h2>[2] Compute and controller roles</h2>
+    <blockquote>
+      <p>“Nodes that serve the compute role are the ones that run the virtual devices. These nodes necessarily have to be Arm servers running our proprietary hypervisor.”</p>
+      <p>“The controller nodes take care of the allocation and scheduling of virtual devices onto the compute nodes. They also store both the default virtual device firmware, and and any custom kernels or other software uploaded by the user, and serve it to compute nodes as necessary.”</p>
+    </blockquote>
+    <p><cite>Server Roles</cite> — <a href="/evidence/corellium/mirror/current/support.corellium.com/setup/manage/server-roles.html">offline original</a> · <a href="/evidence/corellium/raw/current/support.corellium.com/setup/manage/server-roles.html">raw capture</a></p>
+    <p class="provenance">Captured 2026-08-31 · SHA-256 df5964b27b39894ec83bd343461e77f0b93d0a22b524c26b2d7acec6b14eb022</p>
+  </article>
+
+  <article class="source-record" id="s3">
+    <h2>[3] The EL2 boundary</h2>
+    <blockquote><p>“The virtual devices are virtual machines segregated onto dedicated CPU cores at the EL2 level.”</p></blockquote>
+    <p><cite>Compartmentalization</cite> — <a href="/evidence/corellium/mirror/current/support.corellium.com/security/compartmentalization.html">offline original</a> · <a href="/evidence/corellium/raw/current/support.corellium.com/security/compartmentalization.html">raw capture</a></p>
+    <p class="provenance">Captured 2026-08-31 · SHA-256 17c6c65cb5c4ca10ff82a6addcddae03897775fb7f9471b56c38e17768882a84</p>
+  </article>
+
+  <article class="source-record" id="s4">
+    <h2>[4] Ubuntu appliance environment</h2>
+    <blockquote><p>“Since the Corellium OS is based on Ubuntu, can I perform regular Ubuntu updates to my appliance?”</p><p>“No, the version of Ubuntu on your Corellium appliance is unique, updating to any version not provided by us will result in failure.”</p></blockquote>
+    <p><cite>On-site FAQs</cite> — <a href="/evidence/corellium/mirror/current/support.corellium.com/troubleshooting-faqs/on-site-faqs.html">offline original</a> · <a href="/evidence/corellium/raw/current/support.corellium.com/troubleshooting-faqs/on-site-faqs.html">raw capture</a></p>
+    <p class="provenance">Captured 2026-08-31 · SHA-256 9a3c445a15ec34e516a0a1fd5a5c05c1a4e3146e01edc5d90ba1a30ffc357151</p>
+  </article>
+
+  <article class="source-record" id="s5">
+    <h2>[5] Hardware description</h2>
+    <blockquote><p>“A device tree is a representation of hardware used by boot loaders (such as iOS' iBoot) provided to the kernel. It is a hierarchical representation of devices by connection, used by the kernel to communicate with the I/O buses and other low-level hardware.”</p></blockquote>
+    <p><cite>Custom Device Tree</cite> — <a href="/evidence/corellium/mirror/current/support.corellium.com/device-settings/custom-device-tree.html">offline original</a> · <a href="/evidence/corellium/raw/current/support.corellium.com/device-settings/custom-device-tree.html">raw capture</a></p>
+    <p class="provenance">Captured 2026-08-31 · SHA-256 82223eae419f00db5480caf56268048df27af89922f28aac0ee4c12ad1eb172c</p>
+  </article>
+
+  <article class="source-record" id="s6">
+    <h2>[6] Virtual MMIO</h2>
+    <blockquote><p>“Virtual Memory Mapped I/O (VMMIO) is a mechanism for emulating hardware devices. On a virtual device, custom virtual MMIO ranges can be added to the device and driven through a TCP socket.”</p></blockquote>
+    <p><cite>Custom VMMIO</cite> — <a href="/evidence/corellium/mirror/current/support.corellium.com/device-settings/vmmio.html">offline original</a> · <a href="/evidence/corellium/raw/current/support.corellium.com/device-settings/vmmio.html">raw capture</a></p>
+    <p class="provenance">Captured 2026-08-31 · SHA-256 80c18345a37d745d7127693c2a9ab3b70a5ab49b005fe25bc04ddf189bbe1842</p>
+  </article>
+
+  <article class="source-record" id="s7">
+    <h2>[7] Peripheral models attach to buses</h2>
+    <blockquote><p>“The CoreModel API provides over-the-internet support to attach remote peripheral models to a Virtual Machine(VM) bus interfaces. There are multiple standard device interfaces supported including UART, I2C, SPI, CAN, GPIO, and USB Host.”</p></blockquote>
+    <p><cite>corellium/coremodel README</cite> — <a href="/evidence/corellium/github/coremodel/README.md">offline repository file</a> · <a href="/evidence/corellium/github/coremodel/repository.json">repository metadata</a></p>
+    <p class="provenance">Archived repository file · SHA-256 0e874203ffcf6dccfe5d8f7711ad3ac0a3af187003cbe9eaf7f0dec003a77db8</p>
+  </article>
+
+  <article class="source-record" id="s8">
+    <h2>[8] Built-in root access</h2>
+    <blockquote><p>“On iOS, a jailbreak is typically a third-party program that uses a string of vulnerabilities to achieve root access. But because Corellium controls the whole software stack, we don't need to use vulnerabilities to gain root access: we can simply build root access in.”</p></blockquote>
+    <p><cite>iOS</cite> — <a href="/evidence/corellium/mirror/current/support.corellium.com/devices/ios.html">offline original</a> · <a href="/evidence/corellium/raw/current/support.corellium.com/devices/ios.html">raw capture</a></p>
+    <p class="provenance">Captured 2026-08-31 · SHA-256 4ae5b7dd9383c0825efe880fc01c18ecf08fa82c1efd526e4b2e43ee35eb03ee</p>
+  </article>
+
+  <article class="source-record" id="s9">
+    <h2>[9] Hypervisor-observed system calls</h2>
+    <blockquote><p>“Tracing system calls is a dynamic analysis reverse engineering technique that can offer a quick way to understand a program’s behavior. Corellium makes it easy to trace system calls using either our proprietary CoreTrace tool.”</p><p>“time.nsec is the time the entry was captured by the hypervisor,”</p></blockquote>
+    <p><cite>CoreTrace</cite> — <a href="/evidence/corellium/mirror/current/support.corellium.com/features/coretrace.html">offline original</a> · <a href="/evidence/corellium/raw/current/support.corellium.com/features/coretrace.html">raw capture</a></p>
+    <p class="provenance">Captured 2026-08-31 · SHA-256 12b6c2d854f6b128e68d2441b5c2aa82785cfbbb72408f35118f13b7c335376c</p>
+  </article>
+
+  <article class="source-record" id="s10">
+    <h2>[10] Whole-VM execution tracing</h2>
+    <blockquote><p>“Unlike regular CoreSight, CoreXight can collect data for the whole virtual machine (VM) into a single trace.”</p><p>“CoreXight can interleave CoreTrace syscall data in the code flow trace, providing deeper insights into the system's operations.”</p></blockquote>
+    <p><cite>CoreXight</cite> — <a href="/evidence/corellium/mirror/current/support.corellium.com/features/corexight.html">offline original</a> · <a href="/evidence/corellium/raw/current/support.corellium.com/features/corexight.html">raw capture</a></p>
+    <p class="provenance">Captured 2026-08-31 · SHA-256 d5d0080a5ea59a2e6f4d175dadf28c77d7ddff6ca2429412ccd1d98a8f31c6b0</p>
+  </article>
+
+  <article class="source-record" id="s11">
+    <h2>[11] Repeatable machine state</h2>
+    <blockquote><p>“Snapshots give you the ability to save the state of a device and then restore, clone, or share that state at a moment's notice.”</p><p>“Live snapshots include the state of the virtual device's RAM.”</p></blockquote>
+    <p><cite>Snapshots</cite> — <a href="/evidence/corellium/mirror/current/support.corellium.com/features/snapshots.html">offline original</a> · <a href="/evidence/corellium/raw/current/support.corellium.com/features/snapshots.html">raw capture</a></p>
+    <p class="provenance">Captured 2026-08-31 · SHA-256 511b2c2086a76b6a1178e3e7787bc140bb8c087150f2b00e9ea9cb7b6fe9e9bd</p>
+  </article>
+
+  <article class="source-record" id="s12">
+    <h2>[12] Fast rollback for fuzzing</h2>
+    <blockquote><p>“MicroSnapshots are designed for a fuzzing use-case - running very short tests starting from a specific point of execution then rolling back to that point and running another test.”</p><p>“Begins recording changes, essentially starting the testcase.”</p></blockquote>
+    <p><cite>MicroSnapshots</cite> — <a href="/evidence/corellium/mirror/current/support.corellium.com/features/microsnapshots.html">offline original</a> · <a href="/evidence/corellium/raw/current/support.corellium.com/features/microsnapshots.html">raw capture</a></p>
+    <p class="provenance">Captured 2026-08-31 · SHA-256 f98f3108c49200fdb43b9181ae351c0423ec928fad465467d26ad9e0b9e8d4cb</p>
+  </article>
+
+  <article class="source-record" id="s13">
+    <h2>[13] The device-modeling kit</h2>
+    <blockquote><p>“The 5”x5” box comes pre-installed with Corellium software, as well as a specialized SDK for creating virtual models. This is the same tool our own engineers use internally for creating virtualized models.”</p></blockquote>
+    <p><cite>Corellium Developer Kit</cite> — <a href="/evidence/corellium/mirror/current/www.corellium.com/cdk.html">offline original</a> · <a href="/evidence/corellium/raw/current/www.corellium.com/cdk.html">raw capture</a></p>
+    <p class="provenance">Captured 2026-08-31 · SHA-256 52cd85c520a6a77320bf52cc2e1867c518103302713d63b7dba49cb2746627eb</p>
+  </article>
+
+  <article class="source-record" id="s14">
+    <h2>[14] Why virtualization accelerated the work</h2>
+    <blockquote><p>“Our platform creates software-based models of mobile device hardware, enabling users to run ARM-based operating systems on ARM-based enterprise servers.”</p><p>“By leveraging our virtual devices, along with our deep knowledge of both the Android OS and the iPhone hardware, we were able to rapidly iterate to bring Android to life.”</p></blockquote>
+    <p><cite>Project Sandcastle — The Making Of</cite> — <a href="/evidence/corellium/mirror/current/projectsandcastle.org/history.html">offline original</a> · <a href="/evidence/corellium/raw/current/projectsandcastle.org/history.html">raw capture</a></p>
+    <p class="provenance">Captured 2026-08-31 · SHA-256 97b5cdbc12b44ce823f1d045f4c8061049f3d6dc6d70ea9f7608458e02e81f3c</p>
+  </article>
+
+  <article class="source-record" id="s15">
+    <h2>[15] Kernel bring-up loop</h2>
+    <blockquote>
+      <p>“The VM has a nice fast debugger, a number of logging and patching facilities to improve kernel bring-up, and most importantly is really fast to reboot.”</p>
+      <p>“Of course, the first thing you need to do is print, so our first driver was for the uniquely modified UART.”</p>
+      <p>“The SPI controller was a similar story … so we had to write our own driver.”</p>
+      <p>“The PASemi driver in the kernel tree was, again, not capable of interrupt operation, and generally somewhat unfinished, so we wrote our own.”</p>
+      <p>“So we had to build FIQ support from scratch - more than just replacing an interrupt controller driver.”</p>
+      <p>“Armed with the power of VM debugging, though, very soon we found ourselves at a ramdisk-based command prompt, with a few other peripheral devices - like the RTC or GPIO - supported.”</p>
+    </blockquote>
+    <p><cite>Project Sandcastle — The Making Of</cite> — <a href="/evidence/corellium/mirror/current/projectsandcastle.org/history.html">offline original</a> · <a href="/evidence/corellium/raw/current/projectsandcastle.org/history.html">raw capture</a></p>
+    <p class="provenance">Captured 2026-08-31 · SHA-256 97b5cdbc12b44ce823f1d045f4c8061049f3d6dc6d70ea9f7608458e02e81f3c</p>
+  </article>
+
+  <article class="source-record" id="s16">
+    <h2>[16] Model first, verify on hardware</h2>
+    <blockquote><p>“However, because our VMs were constructed without access to real hardware (Corellium supported this phone before the checkm8 exploit was announced), we would occasionally run into surprises when checking against real devices.”</p><p>“Again, initial bring-up in a virtual machine let us write most of the driver without having to dirty our hands with real hardware. Only some register writes that perform low-level adjustments had to be verified against a physical phone.”</p></blockquote>
+    <p><cite>Project Sandcastle — The Making Of</cite> — <a href="/evidence/corellium/mirror/current/projectsandcastle.org/history.html">offline original</a> · <a href="/evidence/corellium/raw/current/projectsandcastle.org/history.html">raw capture</a></p>
+    <p class="provenance">Captured 2026-08-31 · SHA-256 97b5cdbc12b44ce823f1d045f4c8061049f3d6dc6d70ea9f7608458e02e81f3c</p>
+  </article>
+
+  <footer><a href="/running-apple-on-linux.html">Back to chapter</a> · <a href="#top">Top</a></footer>
+</body>
+</html>

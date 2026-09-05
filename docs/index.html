@@ -1,0 +1,1002 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Apple Process Architecture</title>
+  <link rel="stylesheet" href="textbook.css">
+</head>
+<body>
+  <nav class="page-list" aria-label="Pages">
+    <ul>
+      <li><a href="/" aria-current="page">Apple Process Architecture</a></li>
+      <li><a href="/running-apple-on-linux.html">Running Apple on Linux</a></li>
+      <li><a href="/ios-on-linux-mvp.html">iOS on Linux: MVP Layers</a></li>
+      <li><a href="/implementation-v0.html">Implementation v0</a></li>
+    </ul>
+  </nav>
+
+  <nav class="contents-dial" aria-label="On this page">
+    <strong>Apple Process Architecture</strong>
+    <ol>
+      <li><a href="#short">Short version</a></li>
+      <li><a href="#course">OS course</a></li>
+      <li><a href="#kernel">Kernel</a></li>
+      <li><a href="#sep">Secure Enclave</a></li>
+      <li><a href="#simulator">CoreSimulator</a></li>
+      <li><a href="#names">System names</a></li>
+      <li><a href="#example">Example</a></li>
+      <li><a href="#diagrams">Diagrams</a></li>
+      <li><a href="#why">Why ladders</a></li>
+      <li><a href="#terms">Terms</a></li>
+      <li><a href="#appendix">Appendix</a></li>
+      <li><a href="#references">References</a></li>
+    </ol>
+  </nav>
+
+  <header id="top">
+    <h1>Apple Process Architecture</h1>
+    <p>Read one line. Open only when you want the next layer.</p>
+  </header>
+
+  <section id="short">
+    <h2>The short version</h2>
+    <ol>
+      <li>You open an app. macOS creates a process.</li>
+      <li>The kernel maps its Mach-O; <code>dyld</code> connects its libraries.</li>
+      <li>If it needs a helper, XPC may cause <code>launchd</code> and <code>xpcproxy</code> to start one.</li>
+    </ol>
+  </section>
+
+  <section id="course">
+    <h2>Your OS course, translated</h2>
+    <ul>
+      <li>Process management → <code>launchd</code> supervises; <code>xpcproxy</code> launches; <code>exec</code> replaces</li>
+      <li>Executable loading → Mach-O, <code>dyld</code>, dylibs</li>
+      <li>IPC → XPC over Mach messages</li>
+      <li>Threads and scheduling → still handled by the kernel</li>
+      <li>Protection → code signing, entitlements, sandbox</li>
+      <li>Protected keys and biometric policy → Secure Enclave</li>
+    </ul>
+  </section>
+
+  <section id="kernel">
+    <h2>Kernel and scheduler</h2>
+    <details>
+      <summary><code>kernel</code> — The privileged core of the operating system.</summary>
+      <p>It controls hardware access and enforces boundaries between processes. macOS uses the XNU kernel, which combines Mach, BSD, and Apple driver infrastructure.<sup><a href="#r13">13</a></sup></p>
+      <details><summary>Then what is a GPU kernel?</summary><p>A GPU kernel is a small compute function run many times over data. It is code managed by the OS and GPU stack—not the privileged core of the OS.<sup><a href="#r15">15</a></sup></p></details>
+    </details>
+    <details>
+      <summary><code>scheduler</code> — Chooses which runnable thread uses a CPU core next.</summary>
+      <p>It considers readiness, priority, quality of service, and time. The scheduler runs inside the kernel and schedules threads, not abstract “apps.”<sup><a href="#r14">14</a></sup></p>
+      <details><summary>Why threads rather than processes?</summary><p>A thread is the object that has a program counter and actually executes instructions. A process can contain many threads.</p></details>
+    </details>
+  </section>
+
+  <section id="sep">
+    <h2>Secure Enclave</h2>
+
+    <details open>
+      <summary><code>SEP / Secure Enclave</code> — A security subsystem separate from the main processor.</summary>
+      <p>It is integrated into the Apple system-on-chip but isolated from the Application Processor. Its purpose is to protect sensitive data even if the main processor’s kernel is compromised.<sup><a href="#r26">26</a></sup></p>
+      <details><summary>Is it another macOS process?</summary><p>No. XNU and macOS run on the Application Processor. The Secure Enclave has its own processor, protected memory, secure boot chain, and operating system.</p></details>
+    </details>
+
+    <details class="diagram" open>
+      <summary>Where it sits</summary>
+      <figure>
+<pre>APPLICATION PROCESSOR                         SECURE ENCLAVE
+
+apps → security APIs → XNU   ── request ──►  SEP processor → secure operation
+                              ◄── result ───  protected memory and policy
+
+macOS processes cannot directly read Secure Enclave secrets.</pre>
+        <figcaption>The boundary passes requests and results—not unrestricted access to protected key material.</figcaption>
+      </figure>
+    </details>
+
+    <div class="why-ladders">
+      <details>
+        <summary>Why does the Secure Enclave exist?</summary>
+        <p>Some secrets need a stronger boundary than an ordinary process or the main kernel.</p>
+        <details><summary>Why is a process boundary insufficient?</summary><p>A compromised kernel controls ordinary process memory.</p>
+          <details><summary>Why use a separate processor?</summary><p>It can execute security policy without sharing the main processor’s execution core or trust boundary.</p>
+            <details><summary>Why request an operation instead of reading the key?</summary><p>The caller can receive a signature or approval while the protected key remains inside the enclave.</p>
+              <details><summary>Why is this not absolute protection?</summary><p>The Secure Enclave reduces what a main-system compromise exposes; it does not make hardware, software, or surrounding protocols infallible.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+    </div>
+  </section>
+
+  <section id="simulator">
+    <h2>CoreSimulator and Simulator.app</h2>
+    <p><strong>CoreSimulator is the machinery. Simulator.app is the window.</strong></p>
+
+    <details open>
+      <summary><code>CoreSimulator</code> — Xcode’s simulated-device backend.</summary>
+      <p>It manages device definitions, runtime versions, device data, boot and shutdown, app installation and launch, and device I/O. “CoreSimulator” names a stack of frameworks, services, helpers, and runtime processes—not one virtual iPhone process.<sup><a href="#r27">27</a></sup></p>
+      <details><summary>Does it boot a complete iPhone?</summary><p>No. Unlike Corellium’s full virtual hardware, Apple’s Simulator does not boot a separate iPhone XNU kernel or model the complete iPhone SoC. Simulator-targeted iOS user-space processes run over the host macOS kernel.</p></details>
+    </details>
+
+    <details>
+      <summary><code>Simulator.app</code> — The macOS graphical client.</summary>
+      <p>It draws the device window, presents the display, maps Mac input to simulated touch and buttons, and provides menus. Its executable links to CoreSimulator, SimulatorKit, and AppKit.<sup><a href="#r28">28</a></sup></p>
+      <details><summary>Is it required to run an app?</summary><p>No. Apple’s <code>simctl</code> command can boot a device, install and launch an app, terminate it, and capture screenshots without using Simulator.app’s window.<sup><a href="#r27">27</a></sup></p></details>
+    </details>
+
+    <details>
+      <summary><code>simctl</code> — A command-line client for CoreSimulator.</summary>
+      <p>It requests operations from the same simulator backend without providing a device window.<sup><a href="#r27">27</a></sup></p>
+      <details><summary>Why does this matter for coding agents?</summary><p>An agent needs lifecycle, pixels, input, logs, and files. It does not need the human-facing macOS application around them.</p></details>
+    </details>
+
+    <details class="diagram" open>
+      <summary>How the pieces relate</summary>
+      <figure>
+<pre>Xcode                 simctl                 Simulator.app
+  │                     │                   window + menus
+  └──────────────┬──────┴───────────────┬─────────┘
+                 │ CoreSimulator requests
+                 ▼
+         CoreSimulator backend/services
+                 │ device + runtime lifecycle
+                 ▼
+ launchd_sim → SpringBoard / backboardd → your app
+                 │
+                 ▼
+          host macOS XNU kernel</pre>
+        <figcaption>Simulator.app is one client of the backend, not the simulated device itself.</figcaption>
+      </figure>
+    </details>
+
+    <details open>
+      <summary>Will CoreSimulator run an iOS app?</summary>
+      <p><strong>Yes, when the app is built for the iOS Simulator.</strong> Xcode or the Swift compiler produces a simulator-targeted <code>.app</code>; CoreSimulator installs and launches it. CoreSimulator does not compile the source itself.<sup><a href="#r27">27</a>, <a href="#r29">29</a></sup></p>
+      <details>
+        <summary>Will it run an arbitrary <code>.ipa</code> built for an iPhone?</summary>
+        <p><strong>Usually no.</strong> A device app and a Simulator app are different build platforms. Apple records them with different platform IDs and target environments. On Apple Silicon both may contain ARM64 instructions, but their platform metadata, linked system libraries, signing context, and hardware assumptions differ.<sup><a href="#r29">29</a></sup></p>
+        <details><summary>What if I have the Swift source?</summary><p>Build the source for the <code>iphonesimulator</code> target. That is the normal path for agent-driven development and testing.</p></details>
+      </details>
+      <details>
+        <summary>Does it reproduce every behavior of a physical iPhone?</summary>
+        <p>No. App UI, lifecycle, files, networking, and much framework behavior can run. Device-only hardware and security behavior—such as SEP, baseband, some sensors, and exact GPU or timing behavior—requires a physical or full-system device environment.</p>
+      </details>
+    </details>
+
+    <p><strong>For the Linux project:</strong> the valuable target is the CoreSimulator backend and simulator runtime. Reproducing Simulator.app’s macOS window is optional.</p>
+  </section>
+
+  <section id="names">
+    <h2>Kernel, OS, and CPU names</h2>
+    <details>
+      <summary><code>XNU</code> — The kernel inside macOS.</summary>
+      <p>It occupies roughly the same architectural layer that the Linux kernel occupies inside Ubuntu. Its name expands to “X is Not Unix.” XNU combines Mach, BSD-derived Unix facilities, and I/O Kit driver infrastructure.<sup><a href="#r13">13</a>, <a href="#r16">16</a></sup></p>
+      <details><summary>More precise</summary><p>XNU is not macOS. macOS also includes system services, frameworks, command-line tools, and the graphical environment.</p></details>
+    </details>
+    <details>
+      <summary><code>Linux / Ubuntu</code> — A kernel / an operating-system distribution.</summary>
+      <p>Linux manages hardware and processes. Ubuntu packages Linux with user-space tools, services, software management, and a usable system.<sup><a href="#r17">17</a>, <a href="#r18">18</a></sup></p>
+      <details><summary>More precise</summary><p>Calling Ubuntu “Linux” is common shorthand, but Linux itself is the kernel.</p></details>
+    </details>
+    <details>
+      <summary><code>BSD Unix</code> — A Unix lineage originating at Berkeley.</summary>
+      <p>Modern BSD systems descend from that lineage. Inside XNU, the BSD subsystem supplies familiar Unix concepts including processes, users, permissions, files, sockets, and much networking behavior.<sup><a href="#r13">13</a>, <a href="#r19">19</a></sup></p>
+      <details><summary>More precise</summary><p>macOS is not simply FreeBSD with a GUI. XNU integrates BSD-derived facilities with Mach and Apple-specific components.</p></details>
+    </details>
+    <details>
+      <summary><code>ISA</code> — The instruction-set contract between software and a CPU.</summary>
+      <p>It defines machine instructions, registers, and fundamental execution behavior. ARM64 and x86-64 are different ISAs.</p>
+      <details><summary>More precise</summary><p>An operating system and its apps must contain code built for an ISA the CPU can execute, or use translation.</p></details>
+    </details>
+    <details>
+      <summary><code>ARM64</code> — The 64-bit Arm instruction set used by Apple Silicon.</summary>
+      <p>Arm calls the execution state AArch64; Apple tools commonly say <code>arm64</code>. M-series Macs execute this instruction set natively.<sup><a href="#r20">20</a></sup></p>
+      <details><summary>More precise</summary><p>ARM64 describes instructions, not the whole chip. Apple Silicon also contains GPUs, media engines, memory controllers, and other hardware.</p></details>
+    </details>
+    <details>
+      <summary><code>Intel / x86-64</code> — A chip vendor / the ISA used by Intel Macs.</summary>
+      <p>Intel made the CPUs in older Intel Macs; their 64-bit Mac software uses the x86-64 instruction set.<sup><a href="#r20">20</a></sup></p>
+      <details><summary>More precise</summary><p>“Intel” names the vendor. <code>x86_64</code> names the architecture; AMD64 is another name for essentially the same 64-bit ISA family.</p></details>
+    </details>
+    <details>
+      <summary><code>universal binary / Rosetta 2</code> — Two compatibility strategies.</summary>
+      <p>A universal Mach-O contains arm64 and x86-64 slices. On Apple-silicon Macs, Rosetta translates x86-64 code when no arm64 slice is available.<sup><a href="#r20">20</a>, <a href="#r21">21</a></sup></p>
+      <details><summary>Is Rosetta included with every macOS?</summary><p>No. It is irrelevant on Intel Macs. Before macOS 27, an Apple-silicon Mac may offer to install it when an Intel app first needs it. macOS 27 integrates translation; macOS 28 limits Rosetta to certain older games.<sup><a href="#r25">25</a></sup></p></details>
+    </details>
+  </section>
+
+  <section id="example">
+    <h2>A concrete example</h2>
+    <details>
+      <summary>You open a Mac app that uses a thumbnail helper</summary>
+      <ol>
+        <li>macOS finds the app bundle and its executable.</li>
+        <li>The kernel creates a process and maps the Mach-O.</li>
+        <li><code>dyld</code> loads the frameworks the app needs.</li>
+        <li>The app begins running. Its threads are scheduled normally.</li>
+        <li>The app sends “make this thumbnail” over XPC.</li>
+        <li>If the helper is not running, <code>launchd</code> starts it through <code>xpcproxy</code>.</li>
+        <li>The helper replies over XPC. The app displays the thumbnail.</li>
+      </ol>
+    </details>
+  </section>
+
+  <section id="diagrams">
+    <h2>Diagrams</h2>
+
+    <details class="diagram">
+      <summary>XPC and Mach ports are layers, not alternatives</summary>
+      <figure>
+<pre>APP CODE                  XPC                    MACH / KERNEL
+
+“make thumbnail”  →  encode request  →  send Mach message to a port
+                    track connection    enforce port rights
+                    report failure      queue and deliver message
+
+helper function    ←  decode request  ←  receive Mach message</pre>
+        <figcaption>Mach moves protected messages between processes. XPC turns that mechanism into a service-oriented programming interface.</figcaption>
+      </figure>
+    </details>
+
+    <details class="diagram">
+      <summary><code>launchd</code> vs <code>xpcproxy</code></summary>
+      <figure>
+<pre>LONG-LIVED MANAGER                 NEW SERVICE PROCESS
+
+launchd
+  │ create child ─────────────────► xpcproxy
+  │                                  │ configure environment
+  │                                  │ exec(service)
+  │                                  ▼
+  │                                actual service
+  │                                  │
+  └──────── continues supervising ───┘
+
+                                     same child PID,
+                                     different program image</pre>
+        <figcaption><code>launchd</code> remains the manager. <code>xpcproxy</code> is temporary and is replaced by the service.</figcaption>
+      </figure>
+    </details>
+
+    <details class="diagram">
+      <summary>Life of the first thumbnail request</summary>
+      <figure>
+<pre>ACTIVATION — only when the helper is not running
+
+Mac app
+  │ XPC: “make thumbnail”
+  ▼
+launchd
+  │ starts helper
+  ▼
+xpcproxy
+  │ exec(target)
+  ▼
+dyld ─── reads ───► Mach-O + dylibs
+  │ ready
+  ▼
+Thumbnail helper
+
+
+MESSAGING — after the helper is ready
+
+Mac app ───── image bytes or file reference ─────► Helper
+Mac app ◄──────────── thumbnail reply ─────────── Helper</pre>
+        <figcaption><code>launchd</code>, <code>xpcproxy</code>, and <code>dyld</code> prepare the helper. They are not in the normal message path afterward.</figcaption>
+      </figure>
+    </details>
+
+    <details class="diagram">
+      <summary>Where a failure probably lives</summary>
+      <figure>
+<pre>What failed?
+│
+├─ Service never appears ........ launchd / job definition
+├─ Dies before its code runs .... signature / Mach-O / dyld
+├─ Client cannot connect ........ service name / XPC
+├─ Request never replies ........ service handler / XPC lifecycle
+└─ Resource access is denied .... entitlement / sandbox / TCC</pre>
+        <figcaption>A diagnostic map, not a complete list of causes.</figcaption>
+      </figure>
+    </details>
+
+    <details class="diagram">
+      <summary>Where the kernel and scheduler sit</summary>
+      <figure>
+<pre>USER SPACE
+
+Mac app          XPC service          launchd / xpcproxy / dyld
+   │                  │
+   └──── system calls and Mach messages ────┐
+                                             ▼
+──────────────── privilege boundary ─────────────────
+
+KERNEL SPACE — XNU
+
+ scheduler │ virtual memory │ Mach IPC │ files/network │ drivers
+     │
+     ▼
+HARDWARE — CPU cores, memory, disks, GPU, devices</pre>
+        <figcaption>The scheduler chooses threads from the app and service. XPC crosses the process boundary through kernel-managed IPC.</figcaption>
+      </figure>
+    </details>
+
+    <details class="diagram">
+      <summary>macOS compared with Ubuntu</summary>
+      <figure>
+<pre>COMPLETE OS          macOS                    Ubuntu
+                       │                         │
+KERNEL                XNU                      Linux
+                  ┌────┼────┐                    │
+INTERNALS       Mach  BSD  I/O Kit       Linux subsystems
+                       │                         │
+CPU ISA          arm64 or x86-64         arm64 or x86-64
+                       │                         │
+HARDWARE      Apple Silicon / Intel       many vendors</pre>
+        <figcaption>XNU relates to Linux. macOS relates to Ubuntu. ARM64 and x86-64 sit below both kernels.</figcaption>
+      </figure>
+    </details>
+
+    <details class="diagram">
+      <summary>What the parts of XNU contribute</summary>
+      <figure>
+<pre>XNU KERNEL
+
+Mach ........ threads, scheduling, virtual memory, IPC primitives
+BSD ......... Unix process model, users, files, sockets, networking
+I/O Kit ..... device-driver framework
+
+These are integrated parts of one kernel, not three stacked apps.</pre>
+        <figcaption>This is a learning map, not a complete internal decomposition.</figcaption>
+      </figure>
+    </details>
+  </section>
+
+  <section id="why">
+    <h2>Why ladders</h2>
+    <p>Each answer opens the next question.</p>
+    <div class="why-ladders">
+
+      <details>
+        <summary><code>launchd</code>: Why does it exist?</summary>
+        <p>To start and supervise services.<sup><a href="#r1">1</a></sup></p>
+        <details><summary>Why centralize that?</summary><p>So activation, restart, identity, and policy follow one system model.</p>
+          <details><summary>Why activate services on demand?</summary><p>So every service need not run from boot or stay resident.</p>
+            <details><summary>Why address a service by name instead of PID?</summary><p>A name survives when a process exits or restarts.</p>
+              <details><summary>Why must that survive?</summary><p>Clients need the service, not one fragile process instance.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>xpcproxy</code>: Why does it exist?</summary>
+        <p>To configure an XPC service’s execution environment inside the new service process before its code runs.<sup><a href="#r2">2</a></sup></p>
+        <details><summary>Why prepare the environment first?</summary><p>The service must begin with the intended identity, resources, and launch context.</p>
+          <details><summary>Why not let the service prepare itself?</summary><p>Security-sensitive setup must already be true when service code begins.</p>
+            <details><summary>Why use <code>exec</code> afterward?</summary><p>It replaces the setup program with the target while preserving allowed process state.</p>
+              <details><summary>Why a system-owned transition program?</summary><p class="inference">Likely to centralize trusted setup. Apple documents the behavior, not this design rationale.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>trampoline</code>: Why does this programming term exist?</summary>
+        <p>It names short-lived code that receives control and immediately redirects it.</p>
+        <details><summary>Why not call the destination directly?</summary><p>The transition may need setup, adaptation, or indirection first.</p>
+          <details><summary>Why is it short-lived?</summary><p>It performs the handoff, not the destination’s ongoing work.</p>
+            <details><summary>What is being “jumped over”?</summary><p>Nothing specific. The metaphor only suggests landing briefly and continuing elsewhere.</p>
+              <details><summary>How does this apply to <code>xpcproxy</code>?</summary><p>Control enters <code>xpcproxy</code>, setup happens, and <code>exec</code> replaces it with the service.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>exec</code>: Why replace a process image?</summary>
+        <p>So a prepared process can hand control to a different program.</p>
+        <details><summary>Why reuse the process container?</summary><p>Selected descriptors, ports, credentials, and the PID can carry into the target.</p>
+          <details><summary>Why separate preparation from execution?</summary><p>Unix composes “create context” and “choose program” as separate operations.</p>
+            <details><summary>Why is that useful to macOS?</summary><p>The OS can establish launch conditions before third-party code runs.</p>
+              <details><summary>Why does this matter for <code>xpcproxy</code>?</summary><p>The temporary setup program disappears; the prepared process becomes the service.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>dyld</code>: Why does it exist?</summary>
+        <p>To connect an executable to dynamic libraries at launch.<sup><a href="#r3">3</a></sup></p>
+        <details><summary>Why use dynamic libraries?</summary><p>Many programs can reuse system code instead of embedding private copies.</p>
+          <details><summary>Why defer some linking until launch?</summary><p>Only then are the chosen library images and runtime locations known.</p>
+            <details><summary>Why are runtime locations not fixed?</summary><p>ASLR and shared-cache layout place images at actual runtime addresses.</p>
+              <details><summary>Why vary addresses?</summary><p>Randomization impedes predictable attacks; cache layout reduces repeated launch work.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>kernel</code>: Why does it exist?</summary>
+        <p>To provide one privileged authority over hardware and process boundaries.<sup><a href="#r13">13</a></sup></p>
+        <details><summary>Why must anything be privileged?</summary><p>Apps must not directly rewrite memory mappings, control devices, or inspect other processes.</p>
+          <details><summary>Why mediate those operations?</summary><p>Many untrusted programs must safely share one machine.</p>
+            <details><summary>Why is there a user/kernel boundary?</summary><p>Crossing through controlled system calls lets the kernel validate requests and enforce policy.</p>
+              <details><summary>Why is XNU more than one subsystem?</summary><p>macOS combines Mach mechanisms, BSD Unix semantics, and driver infrastructure behind that boundary.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>scheduler</code>: Why does it exist?</summary>
+        <p>Runnable threads usually outnumber available CPU cores.<sup><a href="#r14">14</a></sup></p>
+        <details><summary>Why schedule threads rather than apps?</summary><p>Threads are the units that hold execution state and run instructions.</p>
+          <details><summary>Why interrupt and switch between them?</summary><p>One compute-heavy thread must not monopolize a core.</p>
+            <details><summary>Why use priority and quality of service?</summary><p>Interactive, audio, and background work have different latency needs.</p>
+              <details><summary>Why must the scheduler be in the kernel?</summary><p>Only the kernel can safely stop a thread, save its state, and assign the core to another.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>GPU kernel</code>: Why is it called a kernel?</summary>
+        <p>It is the small core computation dispatched repeatedly over data.<sup><a href="#r15">15</a></sup></p>
+        <details><summary>Why run many copies?</summary><p>Graphics and numerical workloads often apply the same operation to many pixels or elements.</p>
+          <details><summary>Why use a GPU?</summary><p>Its many execution units favor parallel throughput.</p>
+            <details><summary>Why is this not an OS kernel?</summary><p>It is ordinary workload code, not the privileged manager of the machine.</p>
+              <details><summary>What do the meanings share?</summary><p>Only the idea of a central or essential core; their responsibilities are unrelated.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>XNU</code>: Why does it have its own name?</summary>
+        <p>“X is Not Unix” identifies Apple’s kernel project, not the complete macOS product.<sup><a href="#r16">16</a></sup></p>
+        <details><summary>Why is a kernel only one part of macOS?</summary><p>A usable OS also needs services, libraries, tools, application frameworks, and a user interface.</p>
+          <details><summary>Why does XNU combine Mach and BSD?</summary><p>Mach supplies low-level tasks, threads, memory, and IPC; BSD supplies the familiar Unix process, file, socket, and user model.</p>
+            <details><summary>Why include I/O Kit too?</summary><p>The kernel also needs a structured way to drive hardware devices.</p>
+              <details><summary>Why compare XNU with Linux?</summary><p>Both occupy the kernel layer; comparing XNU with Ubuntu mixes a component with a complete OS.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>Linux / Ubuntu</code>: Why are they different names?</summary>
+        <p>Linux is a kernel; Ubuntu is a complete distribution built around it.<sup><a href="#r17">17</a>, <a href="#r18">18</a></sup></p>
+        <details><summary>Why is the kernel not enough?</summary><p>Users also need startup services, shells, libraries, package management, applications, and often a desktop.</p>
+          <details><summary>Why package those as a distribution?</summary><p>The pieces must be selected, integrated, updated, and supported together.</p>
+            <details><summary>Why are there many Linux distributions?</summary><p>They choose different defaults, release policies, interfaces, and target uses.</p>
+              <details><summary>What is the clean comparison?</summary><p>XNU ↔ Linux at the kernel layer; macOS ↔ Ubuntu at the complete-system layer.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>BSD Unix</code>: Why is it inside XNU?</summary>
+        <p>macOS needs mature Unix process, file, user, socket, and networking semantics.<sup><a href="#r13">13</a>, <a href="#r19">19</a></sup></p>
+        <details><summary>Why does Mach not provide all of that?</summary><p>Mach focuses on lower-level tasks, threads, virtual memory, and message-based IPC.</p>
+          <details><summary>Why keep the BSD model visible?</summary><p>It supplies the Unix APIs and behavior expected by shells, servers, and portable software.</p>
+            <details><summary>Why integrate BSD with Mach?</summary><p>macOS needs both the Unix programming model and Mach’s kernel mechanisms.</p>
+              <details><summary>Why is macOS not simply “BSD”?</summary><p>BSD is one major lineage and subsystem within a larger Apple system.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>ISA</code>: Why does it exist?</summary>
+        <p>Software and a CPU need an exact agreement about machine instructions and registers.</p>
+        <details><summary>Why are there multiple ISAs?</summary><p>Processor families evolved with different encodings, capabilities, and design tradeoffs.</p>
+          <details><summary>Why must code target one?</summary><p>ARM64 bytes do not mean the same instructions to an x86-64 processor.</p>
+            <details><summary>Why must the kernel target it too?</summary><p>The kernel performs context switches, handles exceptions, and controls hardware using that CPU’s rules.</p>
+              <details><summary>Why do universal binaries or translation exist?</summary><p>They bridge software distribution across incompatible instruction sets.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>ARM64</code>: Why does it matter on a Mac?</summary>
+        <p>It is the native instruction set executed by Apple Silicon CPUs.<sup><a href="#r20">20</a></sup></p>
+        <details><summary>Why “64”?</summary><p>The architecture uses 64-bit general-purpose registers and a 64-bit execution model.</p>
+          <details><summary>Why is it also called AArch64?</summary><p>AArch64 is Arm’s name for the 64-bit execution state; <code>arm64</code> is Apple’s common toolchain name.</p>
+            <details><summary>Why is ARM64 not the same as Apple Silicon?</summary><p>ARM64 is an instruction set; Apple Silicon is a family of whole chips implementing it.</p>
+              <details><summary>Why does software care?</summary><p>A Mach-O executable needs an arm64 slice to run natively on that CPU.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>Intel / x86-64</code>: Why are both names used?</summary>
+        <p>Intel names the vendor used in older Macs; x86-64 names the instruction set their Mac software uses.<sup><a href="#r20">20</a></sup></p>
+        <details><summary>Why say “Intel app”?</summary><p>It is convenient shorthand for a Mac executable containing x86-64 code.</p>
+          <details><summary>Why can’t ARM64 execute it directly?</summary><p>The instruction encodings and CPU execution model are different.</p>
+            <details><summary>Why does the app still work through Rosetta?</summary><p>On a supported Apple-silicon Mac, Rosetta translates x86-64 instructions into executable arm64 code.<sup><a href="#r21">21</a>, <a href="#r25">25</a></sup></p>
+              <details><summary>Why prefer an arm64 build?</summary><p>Native code avoids translation and can target the current platform directly.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>Apple Silicon</code>: Why is it more than an ARM64 CPU?</summary>
+        <p>It is a system on a chip containing CPU cores plus GPU, memory, media, security, and other engines.</p>
+        <details><summary>Why integrate those parts?</summary><p>They can share packaging, memory architecture, and system-level design decisions.</p>
+          <details><summary>Why does the OS need to know the platform?</summary><p>The kernel and drivers must manage those concrete processors and devices.</p>
+            <details><summary>Why does an app usually care less?</summary><p>Frameworks and the OS abstract most hardware details behind stable APIs.</p>
+              <details><summary>When does an app care directly?</summary><p>When choosing binary slices, using specialized accelerators, or optimizing architecture-specific code.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>universal binary / Rosetta 2</code>: Why do both exist?</summary>
+        <p>They solve compatibility differently during the Intel-to-Apple-Silicon transition.<sup><a href="#r20">20</a>, <a href="#r21">21</a></sup></p>
+        <details><summary>Why put two slices in one universal binary?</summary><p>Each Mac can select native code while users download one app.</p>
+          <details><summary>Why use Rosetta when no arm64 slice exists?</summary><p>Translation preserves access to older x86-64 software.</p>
+            <details><summary>Why is translation not identical to native execution?</summary><p>Instructions must be converted and some architecture-specific assumptions may not carry over.</p>
+              <details><summary>Why is this below most app logic?</summary><p>The OS, loader, and Rosetta handle the architecture boundary before ordinary app behavior.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>process / PID</code>: Why have processes?</summary>
+        <p>To give running programs separate execution and memory containers.</p>
+        <details><summary>Why separate them?</summary><p>Faults and authority can be contained instead of spreading through one address space.</p>
+          <details><summary>Why assign a PID?</summary><p>The kernel and tools need a handle for one live instance.</p>
+            <details><summary>Why is a PID temporary?</summary><p>Processes end, and the finite identifier space is reused.</p>
+              <details><summary>Why use a service name too?</summary><p>A logical service must remain findable across PID changes and restarts.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>XPC</code>: Why does it exist?</summary>
+        <p>To turn low-level IPC into structured connections to services.<sup><a href="#r4">4</a>, <a href="#r6">6</a></sup></p>
+        <details><summary>Does XPC replace Mach ports?</summary><p>No. XPC uses Mach messages underneath; Mach supplies the protected transport.</p>
+          <details><summary>Then what does XPC add?</summary><p>Object encoding, asynchronous handlers, connection errors, peer identity, and service lifecycle integration.</p>
+            <details><summary>Why not use raw Mach messages?</summary><p>The application would have to define and correctly implement those pieces itself.</p>
+              <details><summary>Why keep Mach underneath?</summary><p>The kernel still needs a small, general mechanism for enforcing rights, queueing messages, and crossing process boundaries.</p></details>
+            </details>
+          </details>
+        </details>
+        <details><summary>Why structured, asynchronous messages?</summary><p>They reduce protocol mistakes and avoid making one process wait synchronously by default.</p>
+          <details><summary>Why include connection lifecycle events?</summary><p>The remote process can start, stop, crash, or be replaced.</p>
+            <details><summary>Why expose peer identity?</summary><p>An IPC boundary is also an authorization boundary.</p></details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>XPC service</code>: Why does it exist?</summary>
+        <p>To move work behind a separate process boundary.<sup><a href="#r5">5</a></sup></p>
+        <details><summary>Why use a separate process?</summary><p>A crash or compromise can be contained away from the main app.</p>
+          <details><summary>Why does a process boundary help?</summary><p>Memory and privileges are separate; the kernel mediates crossings.</p>
+            <details><summary>Why make crossings explicit?</summary><p>The interface can expose only the operations the helper should perform.</p>
+              <details><summary>Why is narrower authority valuable?</summary><p>It reduces the blast radius of malformed input, bugs, and compromise.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>Mach / Mach port</code>: Why do they exist?</summary>
+        <p>Separate processes need kernel-mediated communication endpoints.<sup><a href="#r6">6</a></sup></p>
+        <details><summary>Why communicate through ports?</summary><p>A port gives messages a destination and a kernel-managed queue.</p>
+          <details><summary>Why use port rights?</summary><p>Possession determines who may send, receive, or transfer access.</p>
+            <details><summary>Why are port names local to each task?</summary><p>A plain integer in one process should not grant authority in another.</p>
+              <details><summary>Why is that important?</summary><p>The reference acts like a capability, not a globally forgeable address.</p></details>
+            </details>
+          </details>
+        </details>
+        <details><summary>Why is a Mach port not already an XPC service?</summary><p>A port is an endpoint and rights. It does not define request objects, handler methods, service activation, or connection lifecycle.</p></details>
+      </details>
+
+      <details>
+        <summary><code>Mach-O / load command</code>: Why do they exist?</summary>
+        <p>The kernel and <code>dyld</code> need a contract describing native code.<sup><a href="#r7">7</a></sup></p>
+        <details><summary>Why does it share the name “Mach”?</summary><p><code>Mach-O</code> means Mach object file format. It was created for Mach-based systems; it is not the Mach kernel or Mach IPC.</p>
+          <details><summary>Why put mapping instructions in the file?</summary><p>The loader must know which bytes become code, data, dependencies, and signatures.</p>
+            <details><summary>Why use separate load commands?</summary><p>The format can add new metadata without redesigning executable instructions.</p>
+              <details><summary>Why separate metadata from code?</summary><p>Tools can inspect and validate the program without running it.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>dylib / framework</code>: Why do they exist?</summary>
+        <p>To package reusable code instead of copying it into every app.<sup><a href="#r8">8</a></sup></p>
+        <details><summary>Why load shared code dynamically?</summary><p>Programs can share read-only pages and depend on system-provided implementations.</p>
+          <details><summary>Why also have frameworks?</summary><p>Code often needs resources, metadata, headers, and version structure.</p>
+            <details><summary>Why record install names and run paths?</summary><p><code>dyld</code> needs rules for locating dependencies after an app is moved.</p>
+              <details><summary>Why resolve that at runtime?</summary><p>The final bundle location and compatible library set are runtime facts.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>dyld shared cache</code>: Why does it exist?</summary>
+        <p>Most processes load many of the same system libraries.</p>
+        <details><summary>Why prepare them together?</summary><p>The OS can perform layout and linking work once instead of per launch.</p>
+          <details><summary>Why does that improve memory use?</summary><p>Processes can map the same prepared, read-only pages.</p>
+            <details><summary>Why does it improve launch time?</summary><p>Less discovery, mapping, and fixup work is repeated.</p>
+              <details><summary>Why can Apple optimize it globally?</summary><p>The OS controls the system-library set and rebuilds the cache as a unit.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>code signing</code>: Why does it exist?</summary>
+        <p>To bind executable code to identity and integrity information.<sup><a href="#r9">9</a></sup></p>
+        <details><summary>Why must code have identity?</summary><p>Security decisions need to refer to something stronger than a filename or path.</p>
+          <details><summary>Why seal the code’s contents?</summary><p>Identity should stop applying if protected code is modified.</p>
+            <details><summary>Why enforce this outside the app?</summary><p>A program cannot be trusted to validate itself before it runs.</p>
+              <details><summary>Why is signing foundational?</summary><p>Entitlements and other policies must remain attached to the exact approved code.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>entitlement</code>: Why does it exist?</summary>
+        <p>To express a narrow capability as signed metadata.<sup><a href="#r10">10</a></sup></p>
+        <details><summary>Why must it be signed?</summary><p>An app must not be able to grant itself new authority by editing a file.</p>
+          <details><summary>Why use narrow capabilities?</summary><p>Most apps need only a small subset of system powers.</p>
+            <details><summary>Why deny the rest by default?</summary><p>Unused authority becomes unnecessary attack surface.</p>
+              <details><summary>Why does least privilege matter?</summary><p>A compromised component can abuse only the capabilities it actually received.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>App Sandbox</code>: Why does it exist?</summary>
+        <p>To restrict an app below the full authority of the signed-in user.<sup><a href="#r11">11</a></sup></p>
+        <details><summary>Why is the user account not enough?</summary><p>A normal user can access far more data than one app should need.</p>
+          <details><summary>Why enforce policy in the OS?</summary><p>The kernel can mediate file, network, IPC, and other resource access.</p>
+            <details><summary>Why allow entitlements and temporary extensions?</summary><p>Apps still need explicit, controlled routes to legitimate resources.</p>
+              <details><summary>Why sandbox an XPC service separately?</summary><p>Each compartment can receive only the authority required for its one job.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+
+      <details>
+        <summary><code>bundle / Info.plist</code>: Why do they exist?</summary>
+        <p>To package an app and describe it without running it.<sup><a href="#r12">12</a></sup></p>
+        <details><summary>Why package code and resources together?</summary><p>The system and user can move and manage one coherent app.</p>
+          <details><summary>Why use declarative metadata?</summary><p>macOS can discover the executable, document types, and services safely and cheaply.</p>
+            <details><summary>Why not ask the app itself?</summary><p>Launching unknown code merely to identify it would be slow and unsafe.</p>
+              <details><summary>Why include the bundle in signing?</summary><p>Code, metadata, and protected resources must remain one trusted unit.</p></details>
+            </details>
+          </details>
+        </details>
+      </details>
+    </div>
+  </section>
+
+  <section id="terms">
+    <h2>Terms</h2>
+
+    <details>
+      <summary><code>launchd</code> — The long-lived service supervisor.</summary>
+      <p>It activates jobs on demand, creates their processes, and continues managing their lifecycle.<sup><a href="#r1">1</a></sup></p>
+      <details><summary>More precise</summary><p>It decides what should run; it does not link libraries.</p></details>
+    </details>
+
+    <details>
+      <summary><code>xpcproxy</code> — A temporary setup program.</summary>
+      <p>Inside the new child process, it configures the environment, then <code>exec</code> replaces it with the service.<sup><a href="#r2">2</a></sup></p>
+      <details><summary>More precise</summary><p>Apple calls it an “exec trampoline”: control enters briefly, setup happens, then control transfers to the service.</p></details>
+    </details>
+
+    <details>
+      <summary><code>trampoline</code> — Short-lived transition code.</summary>
+      <p>Control lands there briefly, it may perform setup, then it transfers control elsewhere.</p>
+      <details><summary>More precise</summary><p>Nothing specific is jumped over. It is only a metaphor for an immediate handoff.</p></details>
+    </details>
+
+    <details>
+      <summary><code>exec</code> — Replaces the program inside a process.</summary>
+      <p>The new executable runs in the same process container.<sup><a href="#r2">2</a>, <a href="#r6">6</a></sup></p>
+      <details><summary>More precise</summary><p>The PID normally stays the same; the process image changes.</p></details>
+    </details>
+
+    <details>
+      <summary><code>dyld</code> — Makes a dynamic program runnable.</summary>
+      <p>It maps libraries, fixes addresses, and runs initializers before ordinary program code.<sup><a href="#r3">3</a>, <a href="#r7">7</a></sup></p>
+      <details><summary>More precise</summary><p>It links at launch; it does not decide whether to launch.</p></details>
+    </details>
+
+    <details>
+      <summary><code>kernel</code> — The privileged core of the operating system.</summary>
+      <p>It controls hardware access and enforces boundaries between processes. macOS uses XNU.<sup><a href="#r13">13</a></sup></p>
+      <details><summary>More precise</summary><p>Most app code runs in user space and enters the kernel through controlled operations such as system calls.</p></details>
+    </details>
+
+    <details>
+      <summary><code>scheduler</code> — Decides which runnable thread uses a CPU core next.</summary>
+      <p>It runs inside the kernel and considers readiness, priority, quality of service, and time.<sup><a href="#r14">14</a></sup></p>
+      <details><summary>More precise</summary><p>It schedules threads; a process is their resource and address-space container.</p></details>
+    </details>
+
+    <details>
+      <summary><code>SEP / Secure Enclave</code> — Apple’s isolated security subsystem.</summary>
+      <p>It performs protected operations and enforces security policy outside the main macOS kernel’s trust boundary.<sup><a href="#r26">26</a></sup></p>
+      <details><summary>More precise</summary><p><code>SEP</code> commonly means Secure Enclave Processor. Apple uses “Secure Enclave” for the complete subsystem; the processor is one component inside it.</p></details>
+    </details>
+
+    <details>
+      <summary><code>CoreSimulator</code> — Xcode’s simulated-device backend.</summary>
+      <p>It manages simulator devices, runtimes, lifecycle, app installation, launch, and I/O.<sup><a href="#r27">27</a></sup></p>
+      <details><summary>More precise</summary><p>It is a collection of frameworks, services, helpers, and runtime processes—not Simulator.app and not one process.</p></details>
+    </details>
+
+    <details>
+      <summary><code>Simulator.app</code> — The graphical Simulator client.</summary>
+      <p>It presents the simulated display and turns Mac input into device input.<sup><a href="#r28">28</a></sup></p>
+      <details><summary>More precise</summary><p>Closing the conceptual window does not remove the CoreSimulator backend; command-line clients can operate it directly.</p></details>
+    </details>
+
+    <details>
+      <summary><code>simctl</code> — Apple’s Simulator control command.</summary>
+      <p>It boots and controls devices and can install, launch, terminate, and inspect apps without Simulator.app.<sup><a href="#r27">27</a></sup></p>
+    </details>
+
+    <details>
+      <summary><code>.app / .ipa</code> — An app bundle / a packaged device-app archive.</summary>
+      <p>CoreSimulator normally installs a <code>.app</code> built for the Simulator platform. An iPhone-device <code>.ipa</code> is not automatically Simulator-compatible.<sup><a href="#r29">29</a></sup></p>
+    </details>
+
+    <details>
+      <summary><code>GPU kernel</code> — A compute function run many times on a GPU.</summary>
+      <p>It is application workload code, not the privileged OS kernel.<sup><a href="#r15">15</a></sup></p>
+      <details><summary>More precise</summary><p>The shared word “kernel” means a central computation or core; the two roles are otherwise different.</p></details>
+    </details>
+
+    <details>
+      <summary><code>XNU</code> — The kernel used by macOS.</summary>
+      <p>Its name means “X is Not Unix.” It integrates Mach, BSD-derived Unix facilities, and I/O Kit driver infrastructure.<sup><a href="#r13">13</a>, <a href="#r16">16</a></sup></p>
+      <details><summary>More precise</summary><p>XNU relates to Linux; macOS relates to Ubuntu.</p></details>
+    </details>
+
+    <details>
+      <summary><code>Linux / Ubuntu</code> — A kernel / a complete OS distribution.</summary>
+      <p>Ubuntu combines the Linux kernel with user-space software, services, package management, and system defaults.<sup><a href="#r17">17</a>, <a href="#r18">18</a></sup></p>
+      <details><summary>More precise</summary><p>“Linux” commonly names whole systems in conversation, but technically identifies the kernel.</p></details>
+    </details>
+
+    <details>
+      <summary><code>BSD Unix</code> — The Berkeley branch of the Unix family.</summary>
+      <p>XNU’s BSD subsystem supplies much of macOS’s Unix process, file, user, socket, and networking model.<sup><a href="#r13">13</a>, <a href="#r19">19</a></sup></p>
+      <details><summary>More precise</summary><p>BSD is one integrated part of XNU and macOS, not the entire system.</p></details>
+    </details>
+
+    <details>
+      <summary><code>ISA</code> — The machine-language contract understood by a CPU.</summary>
+      <p>It defines instructions, registers, and basic execution behavior. ARM64 and x86-64 are different ISAs.</p>
+      <details><summary>More precise</summary><p>Source code can be portable; the compiled machine code must target a compatible ISA.</p></details>
+    </details>
+
+    <details>
+      <summary><code>ARM64 / AArch64</code> — The 64-bit Arm instruction set.</summary>
+      <p>Apple Silicon Macs execute arm64 code natively.<sup><a href="#r20">20</a></sup></p>
+      <details><summary>More precise</summary><p>ARM64 is an ISA; Apple Silicon is a family of whole chips implementing it.</p></details>
+    </details>
+
+    <details>
+      <summary><code>Intel / x86-64</code> — A chip vendor / its Macs’ instruction set.</summary>
+      <p>Older Intel Macs execute x86-64 Mac code natively.<sup><a href="#r20">20</a></sup></p>
+      <details><summary>More precise</summary><p>“Intel app” is shorthand for a Mac app containing x86-64 code.</p></details>
+    </details>
+
+    <details>
+      <summary><code>Apple Silicon</code> — Apple’s Arm-based system-on-chip family.</summary>
+      <p>It combines arm64 CPU cores with GPU, media, memory, security, and other hardware engines.</p>
+      <details><summary>More precise</summary><p>M1, M2, M3, M4, and related chips are Apple Silicon; ARM64 is the instruction set their CPUs implement.</p></details>
+    </details>
+
+    <details>
+      <summary><code>universal binary / Rosetta 2</code> — Native slices / instruction translation.</summary>
+      <p>A universal Mach-O can contain arm64 and x86-64 code. Rosetta translates x86-64 code on Apple Silicon.<sup><a href="#r20">20</a>, <a href="#r21">21</a></sup></p>
+      <details><summary>Availability</summary><p>Apple-silicon Macs only. Before macOS 27: install when needed. macOS 27: integrated. From macOS 28: limited to certain older games.<sup><a href="#r25">25</a></sup></p></details>
+    </details>
+
+    <details>
+      <summary><code>process / PID</code> — A running program / its temporary number.</summary>
+      <p>A process owns memory and execution state. Its PID identifies that instance.<sup><a href="#r6">6</a></sup></p>
+      <details><summary>More precise</summary><p>An app can use several processes; a PID is not permanent identity.</p></details>
+    </details>
+
+    <details>
+      <summary><code>XPC</code> — Apple’s structured process-messaging system.</summary>
+      <p>It provides asynchronous connections, typed messages, and service lifecycle integration.<sup><a href="#r4">4</a>, <a href="#r5">5</a></sup></p>
+      <details><summary>More precise</summary><p>XPC uses Mach messages as transport, then adds object encoding, handlers, errors, identity, and lifecycle. <code>xpcproxy</code> is separate launch machinery.</p></details>
+    </details>
+
+    <details>
+      <summary><code>XPC service</code> — A separate program that receives XPC work.</summary>
+      <p>It is commonly bundled inside an app and launched when needed.<sup><a href="#r1">1</a>, <a href="#r5">5</a></sup></p>
+      <details><summary>More precise</summary><p>Its separate process creates a reliability and security boundary.</p></details>
+    </details>
+
+    <details>
+      <summary><code>Mach / Mach port</code> — Low-level IPC / a message endpoint.</summary>
+      <p>XPC relies on lower-level mechanisms including Mach messages and port rights.<sup><a href="#r6">6</a></sup></p>
+      <details><summary>More precise</summary><p>A Mach port is not a network port or a service framework. It is a kernel-managed message endpoint; a port right conveys authority.</p></details>
+    </details>
+
+    <details>
+      <summary><code>Mach-O / load command</code> — Native binary / loader metadata.</summary>
+      <p>Load commands describe memory segments, dependencies, signatures, and entry information.<sup><a href="#r7">7</a></sup></p>
+      <details><summary>More precise</summary><p>A load command is metadata, not a shell or CPU instruction.</p></details>
+    </details>
+
+    <details>
+      <summary><code>dylib / framework</code> — Shared code / a bundle that may contain it.</summary>
+      <p><code>dyld</code> connects an executable to the libraries and frameworks it needs.<sup><a href="#r3">3</a>, <a href="#r8">8</a></sup></p>
+      <details><summary>More precise</summary><p>A dylib is a binary; a framework is a package.</p></details>
+    </details>
+
+    <details>
+      <summary><code>dyld shared cache</code> — Optimized system-library collection.</summary>
+      <p>The OS maps prepared system-library data to reduce repeated launch work.<sup><a href="#r3">3</a></sup></p>
+      <details><summary>More precise</summary><p>It is an OS detail, not an app document cache.</p></details>
+    </details>
+
+    <details>
+      <summary><code>code signing</code> — Establishes identity and detects changes.</summary>
+      <p>The OS verifies the signature and evaluates code under platform policy.<sup><a href="#r9">9</a></sup></p>
+      <details><summary>More precise</summary><p>A valid signature does not mean the program is bug-free.</p></details>
+    </details>
+
+    <details>
+      <summary><code>entitlement</code> — A signed security-capability declaration.</summary>
+      <p>The OS evaluates entitlements when code requests protected features.<sup><a href="#r10">10</a></sup></p>
+      <details><summary>More precise</summary><p>It is security metadata, not an ordinary Info.plist setting.</p></details>
+    </details>
+
+    <details>
+      <summary><code>App Sandbox</code> — Limits resources a process may access.</summary>
+      <p>It can restrict a process even when the user has broader access.<sup><a href="#r11">11</a></sup></p>
+      <details><summary>More precise</summary><p>Sandboxing limits access; signing establishes code identity.</p></details>
+    </details>
+
+    <details>
+      <summary><code>bundle / Info.plist</code> — App package / its metadata.</summary>
+      <p>A bundle contains executables and resources; Info.plist describes them to the system.<sup><a href="#r12">12</a></sup></p>
+      <details><summary>More precise</summary><p>The bundle contains the executable; it is not the executable.</p></details>
+    </details>
+  </section>
+
+  <section id="appendix">
+    <h2>Appendix — Names and abbreviations</h2>
+    <details>
+      <summary><code>XNU</code> — “X is Not Unix.”</summary>
+      <p>Apple’s source repository gives that exact self-referential expansion. XNU contains Unix facilities, but the kernel is a hybrid rather than one original Unix kernel.<sup><a href="#r16">16</a></sup></p>
+    </details>
+    <details>
+      <summary><code>BSD</code> — Berkeley Software Distribution.</summary>
+      <p>A branch of Unix developed at the University of California, Berkeley. XNU incorporates BSD-derived components.<sup><a href="#r19">19</a></sup></p>
+    </details>
+    <details>
+      <summary><code>ARM</code> — A historical acronym; today, “Arm” is the name.</summary>
+      <p>It began as “Acorn RISC Machine” and later became “Advanced RISC Machines.” Modern Arm uses the word as its company and architecture brand.<sup><a href="#r22">22</a></sup></p>
+    </details>
+    <details>
+      <summary><code>RISC</code> — Reduced Instruction Set Computer.</summary>
+      <p>A processor-design tradition emphasizing regular, efficient instructions. The name is historical and comparative; modern Arm CPUs are still highly sophisticated.<sup><a href="#r23">23</a></sup></p>
+    </details>
+    <details>
+      <summary><code>AArch64 / arm64</code> — Arm Architecture 64-bit / Apple’s architecture label.</summary>
+      <p>AArch64 is Arm’s name for its 64-bit execution state. Apple tools and Mach-O files commonly use <code>arm64</code>.<sup><a href="#r20">20</a>, <a href="#r22">22</a></sup></p>
+    </details>
+    <details>
+      <summary><code>x86 / x86-64</code> — The 8086 family / its 64-bit extension.</summary>
+      <p>The family descends from Intel’s 8086 processor. Later names such as 286, 386, and 486 preserved the “86” lineage.<sup><a href="#r24">24</a></sup></p>
+    </details>
+    <details>
+      <summary><code>ISA</code> — Instruction Set Architecture.</summary>
+      <p>The formal contract describing the machine instructions and registers a processor understands.</p>
+    </details>
+    <details>
+      <summary><code>IPC</code> — Interprocess Communication.</summary>
+      <p>The general category for communication between processes. XPC, pipes, sockets, and shared memory are IPC mechanisms.</p>
+    </details>
+    <details>
+      <summary><code>XPC</code> — Apple treats this as a name.</summary>
+      <p>Apple’s public documentation does not give a canonical expansion. “Cross-process communication” describes its purpose, but should not be presented as an official acronym.<sup><a href="#r4">4</a></sup></p>
+    </details>
+    <details>
+      <summary><code>dyld / dylib</code> — Dynamic linker / dynamic library.</summary>
+      <p>These are compact Unix-style names used in commands and filenames.<sup><a href="#r3">3</a></sup></p>
+    </details>
+    <details>
+      <summary><code>launchd</code> — Launch daemon.</summary>
+      <p>The trailing <code>d</code> follows the Unix convention for long-running daemon names.<sup><a href="#r1">1</a></sup></p>
+    </details>
+    <details>
+      <summary><code>Mach-O</code> — Mach object file format.</summary>
+      <p>The native executable and object format used by Apple platforms. The shared name records its Mach lineage; Mach-O is a file format, while Mach is part of the kernel.<sup><a href="#r6">6</a>, <a href="#r7">7</a></sup></p>
+    </details>
+    <details>
+      <summary><code>plist</code> — Property list.</summary>
+      <p>Apple’s structured data format for configuration and metadata.</p>
+    </details>
+    <details>
+      <summary><code>Rosetta</code> — Apple’s instruction-translation system.</summary>
+      <p><strong>Name origin:</strong> the Rosetta Stone, which enabled translation between written languages. Rosetta translates program instructions between CPU architectures.</p>
+    </details>
+    <details>
+      <summary><code>CoreSimulator</code> — Core simulator services.</summary>
+      <p>“Core” distinguishes the backend machinery from the graphical Simulator application.</p>
+    </details>
+    <details>
+      <summary><code>simctl</code> — Simulator control.</summary>
+      <p>Apple’s command-line utility for requesting CoreSimulator operations.<sup><a href="#r27">27</a></sup></p>
+    </details>
+    <details>
+      <summary><code>IPA</code> — The <code>.ipa</code> device-app archive format.</summary>
+      <p>The archive contains an iOS app bundle and related metadata. The contained executable’s build platform—not merely the filename—determines whether it can run in Simulator.</p>
+    </details>
+    <details>
+      <summary><code>SEP</code> — Secure Enclave Processor.</summary>
+      <p>The processor supplies the Secure Enclave’s computing power. “Secure Enclave” names the larger subsystem.<sup><a href="#r26">26</a></sup></p>
+    </details>
+  </section>
+
+  <details id="references">
+    <summary>References</summary>
+    <ol>
+      <li id="r1"><a href="https://keith.github.io/xcode-man-pages/launchd.8.html">launchd(8)</a></li>
+      <li id="r2"><a href="https://keith.github.io/xcode-man-pages/xpcproxy.8.html">xpcproxy(8)</a></li>
+      <li id="r3"><a href="https://keith.github.io/xcode-man-pages/dyld.1.html">dyld(1)</a></li>
+      <li id="r4"><a href="https://developer.apple.com/documentation/xpc">XPC</a></li>
+      <li id="r5"><a href="https://developer.apple.com/documentation/xpc/creating-xpc-services">Creating XPC services</a></li>
+      <li id="r6"><a href="https://developer.apple.com/library/archive/documentation/Darwin/Conceptual/KernelProgramming/Mach/Mach.html">Mach Overview</a></li>
+      <li id="r7"><a href="https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/MachOTopics/0-Introduction/introduction.html">Mach-O Programming Topics</a></li>
+      <li id="r8"><a href="https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/DynamicLibraries/000-Introduction/Introduction.html">Dynamic Library Programming Topics</a></li>
+      <li id="r9"><a href="https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/Introduction/Introduction.html">Code Signing Guide</a></li>
+      <li id="r10"><a href="https://developer.apple.com/documentation/bundleresources/entitlements">Entitlements</a></li>
+      <li id="r11"><a href="https://developer.apple.com/documentation/security/app-sandbox">App Sandbox</a></li>
+      <li id="r12"><a href="https://developer.apple.com/documentation/bundleresources/information-property-list">Information Property List</a></li>
+      <li id="r13"><a href="https://developer.apple.com/library/archive/documentation/Darwin/Conceptual/KernelProgramming/Architecture/Architecture.html">Kernel Architecture Overview</a></li>
+      <li id="r14"><a href="https://developer.apple.com/library/archive/documentation/Darwin/Conceptual/KernelProgramming/scheduler/scheduler.html">Mach Scheduling and Thread Interfaces</a></li>
+      <li id="r15"><a href="https://developer.apple.com/documentation/metal/performing-calculations-on-a-gpu">Performing Calculations on a GPU</a></li>
+      <li id="r16"><a href="https://github.com/apple-oss-distributions/xnu">Apple XNU source</a></li>
+      <li id="r17"><a href="https://docs.kernel.org/">Linux kernel documentation</a></li>
+      <li id="r18"><a href="https://ubuntu.com/about">About Ubuntu</a></li>
+      <li id="r19"><a href="https://www.freebsd.org/about/">About FreeBSD</a></li>
+      <li id="r20"><a href="https://developer.apple.com/documentation/apple-silicon/building-a-universal-macos-binary">Building a universal macOS binary</a></li>
+      <li id="r21"><a href="https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment">About the Rosetta translation environment</a></li>
+      <li id="r22"><a href="https://www.arm.com/company/history">Arm company history</a></li>
+      <li id="r23"><a href="https://www.arm.com/glossary/risc">RISC definition</a></li>
+      <li id="r24"><a href="https://timeline.intel.com/1978/the-8086-microprocessor">Intel 8086 history</a></li>
+      <li id="r25"><a href="https://support.apple.com/en-us/102527">Apple Support: If you need to install Rosetta on Mac</a></li>
+      <li id="r26"><a href="/evidence/corellium/mirror/current/support.apple.com/guide/security/the-secure-enclave-sec59b0b31ff/web.html">Apple Platform Security: The Secure Enclave — offline copy</a></li>
+      <li id="r27"><a href="/evidence/apple/coresimulator.html#simctl">Apple Xcode 26.6: <code>simctl</code> lifecycle and I/O evidence — local capture</a></li>
+      <li id="r28"><a href="/evidence/apple/coresimulator.html#linkage">Apple Xcode 26.6: Simulator.app linkage evidence — local capture</a></li>
+      <li id="r29"><a href="/evidence/apple/coresimulator.html#sdk">Apple Xcode 26.6: Simulator and device SDK target metadata — local capture</a></li>
+    </ol>
+  </details>
+
+  <footer><a href="#top">Top</a></footer>
+</body>
+</html>
