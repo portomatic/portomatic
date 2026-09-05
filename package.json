@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "landing:capture": "node apps/landing/scripts/capture-references.mjs",
-    "landing:dev": "node apps/landing/dev-server.mjs",
+    "landing:dev": "pnpm --dir apps/landing dev",
+    "landing:build": "pnpm --dir apps/landing build",
+    "landing:storyboard": "node apps/landing/dev-server.mjs",
     "docs:dev": "python3 tools/dashboard/serve.py",
     "docs:refresh": "python3 tools/dashboard/dashboard.py --once",
     "docs:sync-evidence": "python3 tools/dashboard/sync_evidence.py",
