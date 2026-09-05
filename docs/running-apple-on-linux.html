@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Running Apple on Linux</title>
+  <link rel="stylesheet" href="textbook.css">
+</head>
+<body>
+  <nav class="page-list" aria-label="Pages">
+    <ul>
+      <li><a href="/">Apple Process Architecture</a></li>
+      <li><a href="/running-apple-on-linux.html" aria-current="page">Running Apple on Linux</a></li>
+      <li><a href="/ios-on-linux-mvp.html">iOS on Linux: MVP Layers</a></li>
+      <li><a href="/implementation-v0.html">Implementation v0</a></li>
+    </ul>
+  </nav>
+
+  <nav class="contents-dial" aria-label="Contents">
+    <strong>Running Apple on Linux</strong>
+    <ol>
+      <li><a href="#answer">The answer</a></li>
+      <li><a href="#what">What</a></li>
+      <li><a href="#why">Why</a></li>
+      <li><a href="#how">How</a></li>
+      <li><a href="#process">Engineering process</a></li>
+      <li><a href="#boundary">Evidence boundary</a></li>
+      <li><a href="#corpus">Corpus</a></li>
+    </ol>
+  </nav>
+
+  <header id="top">
+    <h1>Running Apple on Linux</h1>
+    <p>Corellium, reconstructed from its own documentation, code, and engineering notes.</p>
+    <p class="reading-note">Hover a citation to read its evidence. Open it for the exact excerpt and full offline source.</p>
+  </header>
+
+  <section id="answer">
+    <h2>The answer</h2>
+    <p><strong>iOS is not running as a Linux program.</strong> Corellium runs an Arm virtual machine under its CHARM type-1 hypervisor on an Arm server.<a class="cite" href="/evidence/corellium/snippets.html#s1" data-preview="“We use cutting-edge Arm hardware that enables us to virtualize Arm devices on their native architecture…” — Corellium" aria-label="Citation 1">[1]</a> The virtual device is isolated at Arm’s EL2 hypervisor level.<a class="cite" href="/evidence/corellium/snippets.html#s3" data-preview="“The virtual devices are virtual machines segregated onto dedicated CPU cores at the EL2 level.” — Corellium" aria-label="Citation 3">[3]</a></p>
+    <p>Corellium’s appliance environment is Ubuntu-based,<a class="cite" href="/evidence/corellium/snippets.html#s4" data-preview="“The Corellium OS is based on Ubuntu…” — Corellium on-site FAQ" aria-label="Citation 4">[4]</a> but the public material does not say that Linux executes or translates iOS system calls. A better mental model is <em>iOS under CHARM, with Linux around the appliance and control layer</em>—not iOS layered on top of Linux.</p>
+
+    <details class="diagram" open>
+      <summary>The system in one picture</summary>
+      <figure>
+<pre>CONTROL                                              COMPUTE
+
+browser / CLI / API
+        │
+        ▼
+controller role ─── schedules + supplies firmware ──► compute node
+                                                        │
+                                             iOS apps   │  guest
+                                                ▼       │
+                                             XNU kernel │
+                                                ▼       │
+                                      virtual Apple hardware
+                                      ───────────────────────
+                                      CHARM hypervisor — EL2
+                                      ───────────────────────
+                                           Arm server</pre>
+        <figcaption>The controller and compute roles may share one server or occupy different servers.<a class="cite" href="/evidence/corellium/snippets.html#s2" data-preview="Compute nodes run virtual devices; controller nodes schedule them and supply firmware and custom kernels. — Corellium" aria-label="Citation 2">[2]</a></figcaption>
+      </figure>
+    </details>
+  </section>
+
+  <section id="what">
+    <h2>What they built</h2>
+    <details open>
+      <summary><strong>A software model of a device—not merely an app runtime.</strong></summary>
+      <p>The guest sees virtual CPU cores, memory, storage, buses, and peripherals arranged like the target machine. The operating system receives a device tree describing that hardware.<a class="cite" href="/evidence/corellium/snippets.html#s5" data-preview="“A device tree is a representation of hardware used by boot loaders … provided to the kernel.” — Corellium" aria-label="Citation 5">[5]</a></p>
+      <details>
+        <summary>What does “model” mean?</summary>
+        <p>When guest code reads or writes a hardware address, software must reproduce the device’s expected behavior. Corellium explicitly exposes virtual memory-mapped I/O for this purpose.<a class="cite" href="/evidence/corellium/snippets.html#s6" data-preview="“Virtual Memory Mapped I/O (VMMIO) is a mechanism for emulating hardware devices.” — Corellium" aria-label="Citation 6">[6]</a></p>
+        <details>
+          <summary>How broad is that idea?</summary>
+          <p>Its public CoreModel API can attach peripheral models to UART, I²C, SPI, CAN, GPIO, and USB Host buses.<a class="cite" href="/evidence/corellium/snippets.html#s7" data-preview="CoreModel attaches remote peripheral models to VM buses including UART, I2C, SPI, CAN, GPIO, and USB Host. — Corellium" aria-label="Citation 7">[7]</a> This is direct evidence of the mechanism, although it does not expose Corellium’s private iPhone models.</p>
+        </details>
+      </details>
+    </details>
+
+    <details>
+      <summary><strong>A controllable research machine.</strong></summary>
+      <p>Corellium can build root access into virtual iOS because it controls the software stack, rather than waiting for a vulnerability-based jailbreak.<a class="cite" href="/evidence/corellium/snippets.html#s8" data-preview="“Because Corellium controls the whole software stack, we don't need to use vulnerabilities to gain root access: we can simply build root access in.”" aria-label="Citation 8">[8]</a></p>
+    </details>
+
+    <details>
+      <summary><strong>An observation and replay system.</strong></summary>
+      <p>CoreTrace records system calls with timestamps captured by the hypervisor.<a class="cite" href="/evidence/corellium/snippets.html#s9" data-preview="CoreTrace records system-call entries; its timestamp is “captured by the hypervisor.” — Corellium" aria-label="Citation 9">[9]</a> CoreXight can combine whole-VM code-flow and system-call traces.<a class="cite" href="/evidence/corellium/snippets.html#s10" data-preview="“CoreXight can collect data for the whole virtual machine (VM) into a single trace.” — Corellium" aria-label="Citation 10">[10]</a> Snapshots save storage and, for live snapshots, RAM.<a class="cite" href="/evidence/corellium/snippets.html#s11" data-preview="“Snapshots give you the ability to save the state of a device and then restore, clone, or share that state…” — Corellium" aria-label="Citation 11">[11]</a></p>
+    </details>
+  </section>
+
+  <section id="why">
+    <h2>Why it exists</h2>
+    <details open>
+      <summary>Why not use Apple’s Simulator?</summary>
+      <p>The research target is often the OS, kernel, boot process, or hardware interaction—not only an app API. Corellium runs Arm code on Arm hardware and models the surrounding device.<a class="cite" href="/evidence/corellium/snippets.html#s1" data-preview="Corellium says it virtualizes Arm devices “on their native architecture” using a type-1 hypervisor." aria-label="Citation 1">[1]</a></p>
+      <details>
+        <summary>Why does native Arm matter?</summary>
+        <p>The main instruction stream need not be translated to an unrelated host architecture. That improves fidelity and leaves the hypervisor to virtualize privileged execution and devices.</p>
+      </details>
+    </details>
+
+    <details>
+      <summary>Why not use a physical iPhone?</summary>
+      <p>A virtual device can expose root access, whole-machine tracing, exact saved states, cloning, and rapid rollback. These properties turn a difficult-to-observe phone into a controlled experiment.<a class="cite" href="/evidence/corellium/snippets.html#s8" data-preview="Corellium says root access is built into its virtual iOS software stack." aria-label="Citation 8">[8]</a><a class="cite" href="/evidence/corellium/snippets.html#s10" data-preview="CoreXight collects whole-VM code flow and can interleave system-call data." aria-label="Citation 10">[10]</a><a class="cite" href="/evidence/corellium/snippets.html#s11" data-preview="Snapshots can save, restore, clone, or share virtual-device state." aria-label="Citation 11">[11]</a></p>
+      <details>
+        <summary>Why is rollback especially important?</summary>
+        <p>Fuzzing repeatedly mutates one input from the same starting point. MicroSnapshots record changes, run a short test, and roll back without rebuilding the machine.<a class="cite" href="/evidence/corellium/snippets.html#s12" data-preview="“MicroSnapshots are designed for a fuzzing use-case—running very short tests … then rolling back…” — Corellium" aria-label="Citation 12">[12]</a></p>
+      </details>
+    </details>
+  </section>
+
+  <section id="how">
+    <h2>How it works</h2>
+    <ol class="mechanism">
+      <li><strong>Choose a device and firmware.</strong> The controller stores firmware and uploaded boot artifacts, then schedules the virtual device onto a compute node.<a class="cite" href="/evidence/corellium/snippets.html#s2" data-preview="Controller nodes schedule virtual devices and serve firmware and custom kernels to compute nodes. — Corellium" aria-label="Citation 2">[2]</a></li>
+      <li><strong>Create the machine boundary.</strong> CHARM runs on the Arm server as a type-1 hypervisor; Corellium places virtual devices at EL2 and assigns CPU cores.<a class="cite" href="/evidence/corellium/snippets.html#s1" data-preview="CHARM is Corellium’s “type-1 hypervisor” for Arm bare-metal hardware." aria-label="Citation 1">[1]</a><a class="cite" href="/evidence/corellium/snippets.html#s3" data-preview="Virtual devices are segregated on dedicated CPU cores “at the EL2 level.”" aria-label="Citation 3">[3]</a></li>
+      <li><strong>Present Apple-shaped hardware.</strong> A device tree tells iBoot and XNU which devices and buses exist; device models answer the guest’s MMIO and bus activity.<a class="cite" href="/evidence/corellium/snippets.html#s5" data-preview="The device tree describes connected hardware to iBoot and the kernel." aria-label="Citation 5">[5]</a><a class="cite" href="/evidence/corellium/snippets.html#s6" data-preview="VMMIO is Corellium’s documented mechanism for emulating hardware devices." aria-label="Citation 6">[6]</a></li>
+      <li><strong>Boot the guest software.</strong> iOS follows its own user-space → XNU → hardware-facing path, but the “hardware” at the bottom is the virtual model.</li>
+      <li><strong>Observe at the boundary.</strong> Because the hypervisor sits below the guest, it can expose traces and state that an ordinary in-guest debugger cannot easily provide.<a class="cite" href="/evidence/corellium/snippets.html#s9" data-preview="CoreTrace timestamps are captured by the hypervisor." aria-label="Citation 9">[9]</a><a class="cite" href="/evidence/corellium/snippets.html#s10" data-preview="CoreXight can collect a single whole-VM execution trace." aria-label="Citation 10">[10]</a></li>
+      <li><strong>Save the experiment.</strong> Disk and RAM state can be captured, restored, cloned, or rewound for another run.<a class="cite" href="/evidence/corellium/snippets.html#s11" data-preview="Live snapshots include virtual-device RAM; snapshots can be restored or cloned." aria-label="Citation 11">[11]</a><a class="cite" href="/evidence/corellium/snippets.html#s12" data-preview="MicroSnapshots repeatedly return a fuzzing test to one execution point." aria-label="Citation 12">[12]</a></li>
+    </ol>
+
+    <details>
+      <summary>Where does the “hardware” code live?</summary>
+      <p>Corellium publishes an SDK for building virtual models and says it is the same tool its engineers use internally.<a class="cite" href="/evidence/corellium/snippets.html#s13" data-preview="Corellium says its device-modeling SDK is “the same tool our own engineers use internally.”" aria-label="Citation 13">[13]</a> Public VMMIO and CoreModel interfaces show two extension paths: memory-address handlers and bus-attached peripheral processes.<a class="cite" href="/evidence/corellium/snippets.html#s6" data-preview="Custom virtual MMIO ranges can be driven through a TCP socket." aria-label="Citation 6">[6]</a><a class="cite" href="/evidence/corellium/snippets.html#s7" data-preview="CoreModel attaches peripheral models to the VM’s bus interfaces." aria-label="Citation 7">[7]</a></p>
+    </details>
+  </section>
+
+  <section id="process">
+    <h2>How they approached the engineering</h2>
+    <p class="inference"><strong>Important boundary:</strong> Corellium has not published a history of CHARM’s implementation. Project Sandcastle is its clearest primary-source account of using its virtual hardware to understand and bring up an unfamiliar Apple machine.</p>
+
+    <details open>
+      <summary>The loop: model → boot → observe → correct</summary>
+      <p>Corellium says its software device model plus knowledge of Android and iPhone hardware enabled rapid iteration.<a class="cite" href="/evidence/corellium/snippets.html#s14" data-preview="“By leveraging our virtual devices, along with our deep knowledge of both the Android OS and the iPhone hardware, we were able to rapidly iterate…”" aria-label="Citation 14">[14]</a></p>
+      <ol>
+        <li><strong>Start with the SoC model and kernel loader.</strong></li>
+        <li><strong>Make output work first.</strong> Their first driver was the UART, so failures became visible.</li>
+        <li><strong>Bring up foundational buses and interrupts.</strong> They implemented SPI, I²C, the interrupt controller, and an unusual timer path.</li>
+        <li><strong>Reach a tiny shell.</strong> A ramdisk prompt proved CPU, memory, exceptions, timer, console, and enough boot plumbing worked.</li>
+        <li><strong>Add complex hardware.</strong> Multi-core startup, PCIe, NVMe storage, touch, and Wi-Fi followed.</li>
+        <li><strong>Compare with physical hardware.</strong> Mismatches became corrections to the model or driver.</li>
+      </ol>
+      <p>The fast debugger, logging, patching, and reboot cycle were central to kernel bring-up.<a class="cite" href="/evidence/corellium/snippets.html#s15" data-preview="“The VM has a nice fast debugger … logging and patching facilities … and most importantly is really fast to reboot.”" aria-label="Citation 15">[15]</a> They developed much of the PCIe driver in the VM, then verified low-level register behavior on a physical phone.<a class="cite" href="/evidence/corellium/snippets.html#s16" data-preview="“Initial bring-up in a virtual machine let us write most of the driver … Only some register writes … had to be verified against a physical phone.”" aria-label="Citation 16">[16]</a></p>
+    </details>
+
+    <details>
+      <summary>Why this process is illuminating</summary>
+      <p>A device model is an executable hypothesis about hardware. If the real OS boots and its drivers behave correctly, the hypothesis is increasingly accurate. A mismatch—wrong page size, one-shot boot register, unexpected DMA behavior—reveals what the model omitted.</p>
+    </details>
+  </section>
+
+  <section id="boundary">
+    <h2>What the evidence does—and does not—establish</h2>
+    <dl class="evidence-boundary">
+      <dt>Directly documented</dt>
+      <dd>Arm-on-Arm virtualization; CHARM as a type-1 hypervisor; EL2 isolation; controller and compute roles; device trees; VMMIO and bus models; hypervisor tracing; snapshots.</dd>
+      <dt>Strong architectural inference</dt>
+      <dd>Guest hardware accesses must be handled by CHARM or associated device models, and the selected Apple boot artifacts must be made compatible with that modeled machine.</dd>
+      <dt>Not disclosed in this corpus</dt>
+      <dd>CHARM source code; the complete iPhone device model; exact VM-exit paths; precise changes to each iOS boot chain; and the fidelity or implementation of every subsystem such as SEP, baseband, and GPU.</dd>
+    </dl>
+    <p>This boundary matters: the archive supports a detailed architecture, not a source-level reimplementation guide.</p>
+    <p><a href="/evidence/corellium/snippets.html">Open all cited excerpts</a></p>
+  </section>
+
+  <section id="corpus">
+    <h2>Corpus</h2>
+    <p><a href="/evidence/corellium/">Open the complete offline archive</a></p>
+    <details>
+      <summary>Archive contents</summary>
+      <ul>
+        <li>532 current and cited source responses</li>
+        <li>244 historical blog URLs</li>
+        <li>38 official repositories</li>
+        <li>22 official videos</li>
+        <li>34 linked documents</li>
+        <li>6,425 files with SHA-256 checksums</li>
+      </ul>
+      <p><a href="/evidence/corellium/manifest.json">Collection manifest</a> · <a href="/evidence/corellium/file_manifest.json">File checksums</a> · <a href="/evidence/corellium/failure_records.json">Failures</a> · <a href="/evidence/corellium/unresolved_requisites.json">Unresolved dependencies</a></p>
+    </details>
+  </section>
+
+  <footer><a href="#top">Top</a></footer>
+</body>
+</html>
