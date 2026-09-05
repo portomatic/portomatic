@@ -34,13 +34,37 @@ videos, and download logs are ignored by Git. A fresh clone has the documentatio
 and citations, but offline archive links require those additional files. Original
 source links remain in the citation pages and archive index.
 
-To transfer the existing archive, copy the ignored directories listed in
-`docs/.gitignore` into the same locations on the destination machine. The
-`file_manifest.json` records file paths and hashes for the captured archive.
+The shared capture is in the private GCS bucket
+`gs://portomatic-research-400742035256`. To restore it on a coworker's machine:
+
+```sh
+gcloud auth login
+npm run docs:sync-evidence
+npm run docs:dev
+```
+
+The signed-in account needs `roles/storage.objectViewer` on that bucket (or
+equivalent inherited project access). A bucket administrator can grant that role
+to the team's Google group. Do not grant public access. Login is only needed when
+credentials are missing or expired; the sync command does not change the active
+GCP project or account.
+
+The approximately 3 GB download contains the preserved capture, not a fresh crawl.
+Allow about 7 GB free for the download and restored files. The command verifies
+the pinned SHA-256 in `docs/evidence/archive.json` before restoring the ignored
+directories. Identical existing files are retained; differing local files stop
+the restore before it writes any evidence. No files are deleted. After syncing,
+the existing local evidence links work offline.
+
+`file_manifest.json` records file paths and hashes for the original captured archive.
 The collection script is preserved at `tools/dashboard/archive_corellium.py`;
 its optional dependencies are `requests` and `beautifulsoup4`, plus external
 download tools used by the selected phase. Run it with `--help` for phase names.
 Re-downloading sources may differ from the preserved historical capture.
+
+Maintainers: publish future captures under a new dated GCS prefix and update the
+URI and SHA-256 together in `archive.json`. Preserve old objects so an older
+documentation checkout can restore its matching evidence.
 
 ## Migration
 
