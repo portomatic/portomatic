@@ -28,14 +28,13 @@ export default function Home() {
       >
         <h1
           id="hero-title"
-          className="max-w-[13ch] text-[clamp(3.5rem,8vw,7rem)] leading-[0.9] font-normal tracking-[-0.055em] max-[34rem]:text-[clamp(3.2rem,18vw,4.8rem)]"
+          className="max-w-[13ch] text-[clamp(3rem,6vw,5.25rem)] leading-[0.9] font-normal tracking-[-0.055em] max-[34rem]:max-w-full max-[34rem]:text-[clamp(2.5rem,12vw,3.6rem)]"
         >
-          The <span className="tracking-normal">iPhone</span> that runs on
-          Linux.
+          Ephemeral iPhone in 300ms.
         </h1>
-        <p className="mt-[1.4rem] max-w-[34rem] text-[clamp(1.05rem,2vw,1.35rem)] leading-[1.45] text-muted">
-          One for every engineer, agent, and task. Built for hyperscale. Use it
-          through the API, CLI, or iframe.
+        <p className="mt-[1.4rem] max-w-[34rem] text-[clamp(1.05rem,2vw,1.35rem)] leading-[1.45] text-muted max-[34rem]:max-w-full">
+          One per engineer, agent, and task, at any scale. Control it through
+          the API, CLI, or iframe.
         </p>
         <a
           className="mt-8 inline-flex min-h-[3.15rem] items-center justify-center bg-accent px-[1.2rem] py-[0.85rem] text-base leading-none font-normal text-white hover:bg-accent-hover motion-safe:transition-colors motion-safe:duration-[140ms] max-[34rem]:w-full"

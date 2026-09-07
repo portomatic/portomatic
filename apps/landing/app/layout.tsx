@@ -9,17 +9,21 @@ const spaceGrotesk = localFont({
   variable: "--font-space-grotesk",
 });
 
+const title = "Portomatic — Ephemeral iPhone in 300ms";
+const description =
+  "One per engineer, agent, and task, at any scale. Control it through the API, CLI, or iframe.";
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://portomatic.com"),
-  title: "Portomatic",
-  description: "The iPhone that runs on Linux.",
+  title,
+  description,
   alternates: { canonical: "/" },
   icons: {
     icon: [{ url: "/assets/favicon.svg", type: "image/svg+xml", sizes: "any" }],
   },
   openGraph: {
-    title: "Portomatic",
-    description: "The iPhone that runs on Linux.",
+    title,
+    description,
     url: "https://portomatic.com/",
     siteName: "Portomatic",
     type: "website",
