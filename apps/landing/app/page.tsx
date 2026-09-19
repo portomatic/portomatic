@@ -1,3 +1,4 @@
+import { SiteHeader } from "./site-header";
 import { SocialLinks } from "./social-links";
 
 const container = "mx-auto w-[min(100%-2rem,64rem)]";
@@ -5,22 +6,7 @@ const container = "mx-auto w-[min(100%-2rem,64rem)]";
 export default function Home() {
   return (
     <>
-      <header className={`${container} flex min-h-17 items-center border-b border-line`}>
-        <a
-          className="inline-flex items-center gap-2 text-foreground"
-          href="/"
-          aria-label="Portomatic home"
-        >
-          <img
-            src="/assets/portomatic-mark.svg"
-            alt=""
-            className="h-[1.35rem] w-[1.35rem]"
-          />
-          <span className="text-[1.05rem] font-normal tracking-[-0.06em]">
-            Portomatic
-          </span>
-        </a>
-      </header>
+      <SiteHeader />
 
       <main
         className={`${container} flex min-h-[calc(100svh-8.5rem)] flex-col items-start justify-center py-12 text-left max-[34rem]:pt-16 max-[34rem]:pb-24`}
