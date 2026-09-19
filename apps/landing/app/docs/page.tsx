@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "../site-header";
 import { SocialLinks } from "../social-links";
+import { CopySetup } from "./copy-setup";
 
 const container = "mx-auto w-[min(100%-2rem,64rem)]";
 
 const title = "Docs — Portomatic";
 const description =
-  "Add a native, hot-reloading SwiftUI preview of AI-generated Swift to your iOS app with one Swift package.";
+  "Add a native, hot-reloading SwiftUI preview of AI-generated Swift with one Swift package.";
 
 export const metadata: Metadata = {
   title,
@@ -40,29 +41,11 @@ function C({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Section({
-  id,
-  eyebrow,
-  title,
-  children,
-}: {
-  id: string;
-  eyebrow?: string;
-  title: string;
-  children: React.ReactNode;
-}) {
+function H({ children }: { children: React.ReactNode }) {
   return (
-    <section id={id} className="flex scroll-mt-24 flex-col gap-4">
-      {eyebrow ? (
-        <span className="text-[0.74rem] tracking-[0.14em] text-muted uppercase">
-          {eyebrow}
-        </span>
-      ) : null}
-      <h2 className="text-[1.55rem] leading-[1.1] font-normal tracking-[-0.03em]">
-        {title}
-      </h2>
+    <h2 className="text-[1.5rem] leading-[1.1] font-normal tracking-[-0.03em]">
       {children}
-    </section>
+    </h2>
   );
 }
 
@@ -72,50 +55,23 @@ export default function Docs() {
       <SiteHeader current="docs" />
 
       <main
-        className={`${container} flex flex-col gap-14 py-14 max-[34rem]:py-10`}
+        className={`${container} flex max-w-[46rem] flex-col gap-12 py-14 max-[34rem]:py-10`}
       >
-        {/* Intro */}
-        <div className="flex flex-col gap-5 border-b border-line pb-12">
-          <span className="text-[0.74rem] tracking-[0.14em] text-muted uppercase">
+        <div className="flex flex-col gap-4">
+          <h1 className="text-[clamp(2.2rem,5vw,3rem)] leading-[1] font-normal tracking-[-0.05em]">
             iOS SDK
-          </span>
-          <h1 className="max-w-[18ch] text-[clamp(2.4rem,5vw,3.6rem)] leading-[0.98] font-normal tracking-[-0.05em]">
-            A live iPhone preview in one package.
           </h1>
-          <p className="max-w-[46rem] text-[clamp(1.02rem,2vw,1.2rem)] leading-[1.5] text-muted">
-            Portomatic renders your AI-generated Swift as a native,
-            hot-reloading SwiftUI preview — no simulator, no backend of your
-            own, no API key. Add one Swift package, point it at the server, and
-            drop <C>PortomaticPreview()</C> into your view. Every build you
-            submit hot-reloads on device in seconds.
+          <p className="text-[1.05rem] leading-[1.5] text-muted">
+            A native, hot-reloading SwiftUI preview of your AI-generated Swift.
+            No simulator, no backend, no API key.
           </p>
+          <CopySetup />
         </div>
 
-        <Section id="requirements" eyebrow="Before you start" title="Requirements">
-          <ul className="flex max-w-[46rem] list-disc flex-col gap-2 pl-5 text-[1rem] leading-[1.5] text-muted">
-            <li>Xcode 26 or later, targeting iOS 26+.</li>
-            <li>
-              A Portomatic host URL. The public server is{" "}
-              <C>{HOST}</C> — that is all a client needs; there is no auth in
-              the MVP.
-            </li>
-            <li>
-              Swift Package Manager. The SDK pulls in its own dependencies (the
-              native renderer and the wasm engine) automatically.
-            </li>
-          </ul>
-        </Section>
-
-        <Section id="install" eyebrow="Step 1" title="Add the package">
-          <p className="max-w-[46rem] text-[1rem] leading-[1.5] text-muted">
-            In Xcode: <strong className="font-normal text-foreground">File ▸ Add
-            Package Dependencies…</strong>, paste the URL below, and choose{" "}
-            <em className="not-italic text-foreground">Up to Next Major
-            Version</em> from <C>0.1.0</C>.
-          </p>
-          <Pre>{REPO}</Pre>
-          <p className="max-w-[46rem] text-[1rem] leading-[1.5] text-muted">
-            Or in a <C>Package.swift</C> manifest:
+        <section className="flex flex-col gap-4">
+          <H>Installation</H>
+          <p className="text-[1rem] leading-[1.5] text-muted">
+            Add the package in <C>Package.swift</C>:
           </p>
           <Pre>{`dependencies: [
   .package(url: "${REPO}", from: "0.1.0"),
@@ -125,14 +81,13 @@ targets: [
     .product(name: "Portomatic", package: "portomatic-ios"),
   ]),
 ],`}</Pre>
-        </Section>
+        </section>
 
-        <Section id="preview" eyebrow="Step 2" title="Point at the server, show the preview">
-          <p className="max-w-[46rem] text-[1rem] leading-[1.5] text-muted">
-            Configure the shared client once at launch, then use{" "}
-            <C>PortomaticPreview</C> anywhere. It watches the current build for
-            your session and renders it with real SwiftUI, hot-reloading as new
-            builds land.
+        <section className="flex flex-col gap-4">
+          <H>Configure</H>
+          <p className="text-[1rem] leading-[1.5] text-muted">
+            Point the client at the server, then drop <C>PortomaticPreview</C>{" "}
+            into any view. It renders the current build and hot-reloads.
           </p>
           <Pre>{`import SwiftUI
 import Portomatic
@@ -144,120 +99,24 @@ struct MyApp: App {
     }
 
     var body: some Scene {
-        WindowGroup { PreviewScreen() }
-    }
-}
-
-struct PreviewScreen: View {
-    var body: some View {
-        PortomaticPreview()   // native, hot-reloading
+        WindowGroup { PortomaticPreview() }
     }
 }`}</Pre>
-        </Section>
+        </section>
 
-        <Section id="submit" eyebrow="Step 3" title="Submit source from your agent">
-          <p className="max-w-[46rem] text-[1rem] leading-[1.5] text-muted">
-            Send a revision of a codebase to the server. On success that build
-            becomes the session&apos;s <C>current</C>, so the matching{" "}
-            <C>PortomaticPreview</C> swaps to it automatically.
+        <section className="flex flex-col gap-4">
+          <H>Submit source</H>
+          <p className="text-[1rem] leading-[1.5] text-muted">
+            Send source from your agent; the matching preview swaps to it.
           </p>
           <Pre>{`let result = try await Portomatic.shared.submit(
-    files: ["ContentView.swift": generatedSwiftSource],
+    files: ["ContentView.swift": generatedSource],
     root: "ContentView"
 )
 
-if result.ok {
-    // The preview watching this session hot-reloads to result.id.
-} else {
-    // A build failure is a normal result, not a thrown error:
-    // feed the diagnostics back to your agent to self-heal.
-    let errors = result.diagnostics?.errors ?? 0
-    print("build failed: \\(errors) error(s)")
-    print(result.log_tail ?? "")
-}`}</Pre>
-          <p className="max-w-[46rem] text-[1rem] leading-[1.5] text-muted">
-            <C>submit</C> only <em className="not-italic text-foreground">throws</em>{" "}
-            for transport or HTTP problems (<C>PortomaticError</C>:{" "}
-            <C>.notConfigured</C>, <C>.rateLimited</C>, <C>.badRequest</C>,{" "}
-            <C>.server</C>, <C>.transport</C>). A source that fails to compile
-            comes back as <C>ok: false</C> with compiler diagnostics.
-          </p>
-        </Section>
-
-        <Section id="sessions" eyebrow="Concurrency" title="Sessions">
-          <p className="max-w-[46rem] text-[1rem] leading-[1.5] text-muted">
-            One server backs many independent previews. Key each by a session
-            id — a project, a task, a user. The side that submits and the
-            preview that watches simply share the id.
-          </p>
-          <Pre>{`// Set a default session for the whole client…
-Portomatic.shared.setup(host: "${HOST}", session: "proj-42")
-
-// …or override per call and per view:
-try await Portomatic.shared.submit(
-    files: files, root: "ContentView", session: "proj-42")
-
-PortomaticPreview(session: "proj-42")`}</Pre>
-        </Section>
-
-        <Section id="api" eyebrow="Reference" title="API">
-          <p className="max-w-[46rem] text-[1rem] leading-[1.5] text-muted">
-            <C>import Portomatic</C> exposes exactly three public symbols.
-          </p>
-          <dl className="flex flex-col divide-y divide-line border-y border-line">
-            {[
-              {
-                sig: "Portomatic.shared.setup(host: String, session: String = \"default\")",
-                desc: "Configure the shared client. Also setup(_ config: PortomaticConfig). Read config / isConfigured to inspect it.",
-              },
-              {
-                sig: "PortomaticConfig(host: String, session: String = \"default\")",
-                desc: "An explicit configuration for advanced or multi-host use. PortomaticConfig.fromEnvironment() reads MILQ_LIVE_URL / MILQ_LIVE_SESSION.",
-              },
-              {
-                sig: "submit(files:root:app:checkOnly:noRewrite:canImport:session:) async throws -> BuildResult",
-                desc: "Compile one revision. files maps relative paths to Swift source; root is the root type name; app: true when root conforms to App; checkOnly: true type-checks without producing a module.",
-              },
-              {
-                sig: "BuildResult",
-                desc: "ok, id, seconds, cached, diagnostics(errors, warnings), wasm_url, manifest_url, log_tail.",
-              },
-              {
-                sig: "PortomaticPreview(session: String? = nil)",
-                desc: "The SwiftUI view that renders the current build and hot-reloads. Also PortomaticPreview(config:session:).",
-              },
-            ].map((row) => (
-              <div key={row.sig} className="flex flex-col gap-1.5 py-4">
-                <dt className="font-mono text-[0.82rem] leading-[1.5] text-foreground">
-                  {row.sig}
-                </dt>
-                <dd className="max-w-[46rem] text-[0.95rem] leading-[1.5] text-muted">
-                  {row.desc}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </Section>
-
-        <Section id="http" eyebrow="Without the SDK" title="HTTP API">
-          <p className="max-w-[46rem] text-[1rem] leading-[1.5] text-muted">
-            The SDK is a thin wrapper over a small HTTP surface on <C>{HOST}</C>.
-            You can drive it directly from any language.
-          </p>
-          <Pre>{`POST /build
-  { "session": "proj-42", "root": "ContentView",
-    "app": false, "check_only": false, "files": { "ContentView.swift": "…" } }
-  -> 200 { "ok": true, "id": "wasm-…", "seconds": 1.2, "cached": false,
-           "diagnostics": {…}, "wasm_url": "…", "manifest_url": "…" }
-  A build failure is also 200 (with diagnostics); 400 means a malformed request.
-
-GET /current?session=proj-42
-  -> { "id": "wasm-…", "wasm_url": "…", "manifest_url": "…" }   // or { "id": null }
-
-GET /artifact/<id>/app.wasm        // the compiled module
-GET /artifact/<id>/manifest.json   // its manifest
-GET /healthz                       // -> ok`}</Pre>
-        </Section>
+// A compile failure comes back as result.ok == false
+// with result.diagnostics — feed it back to the agent.`}</Pre>
+        </section>
       </main>
 
       <footer
