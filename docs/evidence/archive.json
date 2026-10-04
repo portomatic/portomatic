@@ -1,7 +1,0 @@
-{
-  "project": "affable-heading-498721-f4",
-  "uri": "gs://portomatic-research-400742035256/corellium/2026-09-04/corellium.tar.gz",
-  "sha256": "67db514d58332457d1e3ef9128f9c962dde579ee2f1d2b5ffb1b24cd3cf44ab1",
-  "capture": "2026-09-04",
-  "directories": ["documents", "github", "media", "mirror", "raw", "logs"]
-}
