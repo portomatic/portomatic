@@ -3,6 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "crm:start": "node apps/crm/server.mjs",
+    "crm:install": "bash apps/crm/ops/install.sh",
+    "crm": "node apps/crm/cli.mjs",
+    "crm:sync": "node apps/crm/cli.mjs sync",
     "landing:capture": "node apps/landing/scripts/capture-references.mjs",
     "landing:dev": "pnpm --dir apps/landing dev",
     "landing:build": "pnpm --dir apps/landing build",

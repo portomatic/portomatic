@@ -1,0 +1,6 @@
+# Portomatic CRM. Installed by apps/crm/ops/install.sh.
+http://crm.localhost {
+  @external not remote_ip 127.0.0.0/8 ::1
+  respond @external "This dashboard is available only on this Mac." 403
+  reverse_proxy 127.0.0.1:3180
+}
