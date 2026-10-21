@@ -1,22 +1,10 @@
 # Portomatic
 
-> Portomatic gives coding agents and engineers an ephemeral iPhone, booted in about 300ms.
-
-Portomatic runs a real, emulated iPhone on demand. Each one is disposable: spin up a fresh
-device for every engineer, agent, and task, then throw it away. Runs at any scale, with low
-enough latency to keep an agent in the loop.
-
-## Control surfaces
-
-- API — drive a device programmatically
-- CLI — spin up and script devices from the terminal
-- iframe — embed a live device in the browser
+> We build environments that run locally for your agents.
 
 ## Facts
 
-- Product: on-demand, ephemeral emulated iPhone
-- Cold start: ~300ms
-- Audience: coding agents, LLMs, and the engineers building them
+- Product: local environments for coding agents
 - Canonical URL: https://portomatic.com/
 - Contact: founders@portomatic.com
 - LinkedIn: https://www.linkedin.com/company/portomatichq/

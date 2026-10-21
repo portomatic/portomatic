@@ -1,7 +1,7 @@
 # Portomatic landing page
 
 The Portomatic landing site, built with Next.js (App Router, static export),
-TypeScript, Tailwind CSS v4, and Base UI. Managed with pnpm.
+TypeScript, and plain CSS. Managed with pnpm.
 
 - `app/` contains the page, layout, global styles, and typed `robots.ts` /
   `sitemap.ts` metadata routes.

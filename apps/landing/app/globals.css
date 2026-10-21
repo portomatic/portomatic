@@ -1,34 +1,131 @@
-@import "tailwindcss";
-
-@theme {
-  --color-background: #f5f8fa;
-  --color-foreground: #111b24;
-  --color-muted: #60717d;
-  --color-line: rgba(17, 27, 36, 0.18);
-  --color-accent: #2457d6;
-  --color-accent-hover: #1948bc;
-  --font-sans:
-    var(--font-space-grotesk), ui-sans-serif, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
-
 :root {
+  color: #1d1d1b;
+  background: #faf9f6;
+  font-family: "Times New Roman", Times, serif;
+  line-height: 1.65;
   color-scheme: light;
 }
 
-html {
-  background: var(--color-background);
-}
-
 body {
-  min-width: 320px;
-  min-height: 100svh;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  max-width: 44rem;
+  margin: 4rem auto;
+  padding: 0 1.25rem;
 }
 
-a:focus-visible,
-button:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--color-accent) 42%, transparent);
-  outline-offset: 3px;
+header {
+  margin-bottom: 1.25rem;
+}
+
+h1,
+h2 {
+  line-height: 1.2;
+}
+
+h2 {
+  margin-top: 2.5rem;
+}
+
+a {
+  color: #0645ad;
+}
+
+a:focus-visible {
+  outline: 2px solid #0645ad;
+  outline-offset: 2px;
+}
+
+#brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #1d1d1b;
+  font-size: 1.05rem;
+  text-decoration: none;
+}
+
+#brand img {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+#actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+#early-access {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.1rem;
+  padding: 0.28rem 0.65rem;
+  border: 1px solid #1d1d1b;
+  border-radius: 2px;
+  color: white;
+  background: #1d1d1b;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+#early-access:hover {
+  background: #383834;
+}
+
+footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #c8c5bc;
+}
+
+#backed-by {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+#backed-by a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #1d1d1b;
+  text-decoration: none;
+}
+
+#backed-by img {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+#social-links {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+#social-links a {
+  display: inline-flex;
+  opacity: 0.72;
+}
+
+#social-links a:hover {
+  opacity: 1;
+}
+
+#social-links img {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+@media (max-width: 48rem) {
+  body {
+    margin: 1.5rem auto;
+  }
 }

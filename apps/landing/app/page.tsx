@@ -1,56 +1,54 @@
-import { SiteHeader } from "./site-header";
-import { SocialLinks } from "./social-links";
-
-const container = "mx-auto w-[min(100%-2rem,64rem)]";
-
 export default function Home() {
   return (
     <>
-      <SiteHeader />
-
-      <main
-        className={`${container} flex min-h-[calc(100svh-8.5rem)] flex-col items-start justify-center py-12 text-left max-[34rem]:pt-16 max-[34rem]:pb-24`}
-        aria-labelledby="hero-title"
-      >
-        <h1
-          id="hero-title"
-          className="max-w-[13ch] text-[clamp(3rem,6vw,5.25rem)] leading-[0.9] font-normal tracking-[-0.055em] max-[34rem]:max-w-full max-[34rem]:text-[clamp(2.5rem,12vw,3.6rem)]"
-        >
-          Ephemeral iPhone in 300ms.
-        </h1>
-        <p className="mt-[1.4rem] max-w-[34rem] text-[clamp(1.05rem,2vw,1.35rem)] leading-[1.45] text-muted max-[34rem]:max-w-full">
-          One per engineer, agent, and task, at any scale. Control it through
-          the API, CLI, or iframe.
-        </p>
-        <a
-          className="mt-8 inline-flex min-h-[3.15rem] items-center justify-center bg-accent px-[1.2rem] py-[0.85rem] text-base leading-none font-normal text-white hover:bg-accent-hover motion-safe:transition-colors motion-safe:duration-[140ms] max-[34rem]:w-full"
-          href="mailto:founders@portomatic.com?subject=Portomatic%20early%20access"
-        >
-          Get early access
+      <header>
+        <a id="brand" href="/" aria-label="Portomatic home">
+          <img src="/assets/portomatic-mark.svg" alt="" />
+          Portomatic
         </a>
+        <h1>Local environments for your agents</h1>
+        <p>We build environments that run locally for your agents.</p>
+      </header>
+
+      <main>
+        <div id="actions">
+          <a
+            id="early-access"
+            href="mailto:founders@portomatic.com?subject=Portomatic%20early%20access"
+          >
+            Get early access
+          </a>
+        </div>
       </main>
 
-      <footer
-        className={`${container} flex min-h-17 items-center justify-between gap-4 border-t border-line max-[22rem]:min-h-0 max-[22rem]:flex-col max-[22rem]:items-start max-[22rem]:py-4`}
-      >
-        <div className="flex items-center gap-4">
-          <p className="text-[0.74rem] text-muted">Backed by</p>
-          <div className="flex items-center gap-4">
-            <a
-              href="https://www.ycombinator.com/"
-              aria-label="Y Combinator"
-              className="inline-flex items-center gap-[0.4rem] text-[0.74rem] text-foreground"
-            >
-              <img
-                src="/assets/ycombinator.svg"
-                alt=""
-                className="h-[1.3rem] w-[1.3rem]"
-              />
-              <span>Combinator</span>
-            </a>
-          </div>
-        </div>
-        <SocialLinks />
+      <footer>
+        <p id="backed-by">
+          Backed by
+          <a href="https://www.ycombinator.com/" aria-label="Y Combinator">
+            <img src="/assets/ycombinator.svg" alt="" />
+            Combinator
+          </a>
+        </p>
+        <nav id="social-links" aria-label="Portomatic social accounts">
+          <a
+            href="https://www.linkedin.com/company/portomatichq/"
+            aria-label="Portomatic on LinkedIn"
+            title="Portomatic on LinkedIn"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img src="/assets/linkedin.svg" alt="" />
+          </a>
+          <a
+            href="https://x.com/portomatichq"
+            aria-label="Portomatic on X"
+            title="Portomatic on X"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img src="/assets/x.svg" alt="" />
+          </a>
+        </nav>
       </footer>
     </>
   );

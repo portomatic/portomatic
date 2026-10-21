@@ -1,17 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
 import "./globals.css";
 
-const spaceGrotesk = localFont({
-  src: "./fonts/space-grotesk-latin.woff2",
-  weight: "400 500",
-  display: "block",
-  variable: "--font-space-grotesk",
-});
-
-const title = "Portomatic — Ephemeral iPhone in 300ms";
-const description =
-  "One per engineer, agent, and task, at any scale. Control it through the API, CLI, or iframe.";
+const title = "Portomatic: Local environments for your agents";
+const description = "We build environments that run locally for your agents.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://portomatic.com"),
@@ -31,7 +22,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f5f8fa",
+  themeColor: "#faf9f6",
 };
 
 export default function RootLayout({
@@ -40,10 +31,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={spaceGrotesk.variable}>
-      <body className="bg-background font-sans text-foreground">
-        {children}
-      </body>
+    <html lang="en">
+      <body>{children}</body>
     </html>
   );
 }
