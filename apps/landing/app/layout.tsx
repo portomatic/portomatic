@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-const title = "Portomatic: Local environments for your agents";
-const description = "We build environments that run locally for your agents.";
+const title = "Portomatic: Environments for coding agents";
+const description = "We create environments that run locally to test your agents.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://portomatic.com"),

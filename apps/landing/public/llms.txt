@@ -1,10 +1,10 @@
 # Portomatic
 
-> We build environments that run locally for your agents.
+> We create environments that run locally to test your agents.
 
 ## Facts
 
-- Product: local environments for coding agents
+- Product: local environments to test coding agents
 - Canonical URL: https://portomatic.com/
 - Contact: founders@portomatic.com
 - LinkedIn: https://www.linkedin.com/company/portomatichq/
